@@ -15,7 +15,7 @@ func (h *HashMap) String() string {
 		buffer.WriteString(fmt.Sprintf("\t\tentryCount: %d\n", v.entryCount))
 		buffer.WriteString("\t\tentries: [\n")
 		for i := uint32(0); i < uint32(v.entryCount); i++ {
-			buffer.WriteString(fmt.Sprintf("\t\t\t[0x%08x,%d] -> %s\n", v.hobs.Read(i), v.entries[i].key, v.entries[i].value))
+			buffer.WriteString(fmt.Sprintf("\t\t\t[0x%08x,%s] -> %s\n", v.hobs.Read(i), v.entries[i].key, v.entries[i].value))
 		}
 		buffer.WriteString("\t\t]\n")
 		buffer.WriteString("\t},\n")
