@@ -3,13 +3,13 @@ package immutable
 // Base describes the low-level set of functions
 type Base interface {
 	Iterate() Iterator
-	Get(key uint32) Value
+	Get(key Key) Value
 	Size() uint32
 }
 
 type internalFunctions interface {
 	instantiate(initialSize uint32) *BaseStruct
-	internalSet(key uint32, value Value)
+	internalSet(key Key, value Value)
 }
 
 // BaseStruct is what it say on the tin
