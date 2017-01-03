@@ -1,7 +1,6 @@
 package immutable
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/object88/memory"
@@ -82,18 +81,18 @@ func (h *HashMap) Iterate() Iterator {
 		for ; i < uint32(len(h.buckets)); i++ {
 			b := h.buckets[i]
 			if b == nil {
-				fmt.Printf("At %d, empty bucket\n", i)
+				// fmt.Printf("At %d, empty bucket\n", i)
 				continue
 			}
 			if j == b.entryCount {
-				fmt.Printf("At [%d:%d], at last entry\n", i, j)
+				// fmt.Printf("At [%d:%d], at last entry\n", i, j)
 				j = 0
 				continue
 			}
 			e := b.entries[j]
 			k := e.key
 			v := e.value
-			fmt.Printf("At [%d:%d], got %s->%s\n", i, j, k, v)
+			// fmt.Printf("At [%d:%d], got %s->%s\n", i, j, k, v)
 			j++
 			return k, v, iterator
 		}
