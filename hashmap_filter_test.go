@@ -5,12 +5,12 @@ import (
 	"testing"
 )
 
-func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
+func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 	var original *HashMap
 	invokeCount := 0
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		invokeCount++
-		return v.(int) * 2, nil
+		return v.(int)%2 == 0, nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -23,13 +23,13 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 	}
 }
 
-func Test_Hashmap_Map_WithEmpty(t *testing.T) {
+func Test_Hashmap_Filter_WithEmpty(t *testing.T) {
 	contents := map[Key]Value{}
 	original := NewHashMap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		invokeCount++
-		return v.(int) * 2, nil
+		return v.(int)%2 == 0, nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -42,7 +42,7 @@ func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 	}
 }
 
-func Test_Hashmap_Map_WithContents(t *testing.T) {
+func Test_Hashmap_Filter_WithContents(t *testing.T) {
 	contents := map[Key]Value{
 		IntKey(1): 1,
 		IntKey(2): 2,
@@ -50,37 +50,38 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 	}
 	original := NewHashMap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		invokeCount++
-		return v.(int) * 2, nil
+		return v.(int)%2 == 0, nil
 	})
 	if err != nil {
 		t.Error(err)
 	}
-	for k, v := range contents {
-		result := modified.Get(k)
-		expected := v.(int) * 2
-		if result != expected {
-			t.Fatalf("At %s, got incorrect result, expected %d, got %d\n", k, expected, result)
-		}
+	size := modified.Size()
+	if size != 1 {
+		t.Fatalf("Incorrect number of elements in new collection; expected 1, got %d\n", size)
+	}
+	value := modified.Get(IntKey(2))
+	if value == nil || value.(int) != 2 {
+		t.Fatalf("Incorrect contents of new collection:\n%s\n", modified)
 	}
 	if invokeCount != 3 {
 		t.Fatalf("Function invoked %d times", invokeCount)
 	}
 }
 
-func Test_Hashmap_Map_WithCancel(t *testing.T) {
+func Test_Hashmap_Filter_WithCancel(t *testing.T) {
 	contents := map[Key]Value{
 		IntKey(1): 1,
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
 	original := NewHashMap(contents)
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		if k.(IntKey)%2 == 0 {
-			return nil, errors.New("Found an even key")
+			return false, errors.New("Found an even key")
 		}
-		return v.(int) * 2, nil
+		return v.(int)%2 == 0, nil
 	})
 	if err == nil {
 		t.Fatalf("Failed to return error")

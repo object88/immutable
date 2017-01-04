@@ -9,6 +9,7 @@ type Base interface {
 
 type internalFunctions interface {
 	instantiate(initialSize uint32) *BaseStruct
+	instantiateWithContents(initialSize uint32, contents []*keyValuePair) *BaseStruct
 	internalSet(key Key, value Value)
 }
 
@@ -19,12 +20,9 @@ type BaseStruct struct {
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
-func (b *BaseStruct) Filter(predicate FilterPredicate) (*BaseStruct, error) {
-	if b == nil {
-		return nil, nil
-	}
-
-	mutated := b.instantiate(0)
+func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
+	resultSet := make([]*keyValuePair, b.Size())
+	resultSetCount := uint32(0)
 	abort := make(chan struct{})
 	ch := b.Iterate(abort)
 	for kvp := range ch {
@@ -34,19 +32,17 @@ func (b *BaseStruct) Filter(predicate FilterPredicate) (*BaseStruct, error) {
 			return nil, err
 		}
 		if keep {
-			mutated.internalSet(kvp.key, kvp.value)
+			resultSet[resultSetCount] = &keyValuePair{kvp.key, kvp.value}
+			resultSetCount++
 		}
 	}
+
+	mutated := b.instantiateWithContents(resultSetCount, resultSet)
 
 	return mutated, nil
 }
 
-// ForEach iterates over all collection contents
-func (b *BaseStruct) ForEach(predicate ForEachPredicate) {
-	if b == nil {
-		return
-	}
-
+func (b *BaseStruct) forEach(predicate ForEachPredicate) {
 	abort := make(chan struct{})
 	ch := b.Iterate(abort)
 	for kvp := range ch {
