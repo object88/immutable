@@ -1,7 +1,6 @@
 package immutable
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/object88/memory"
@@ -44,7 +43,6 @@ func NewHashMap(contents map[Key]Value) *HashMap {
 	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
 
 	for k, v := range contents {
-		fmt.Printf("Assigning %s -> %s\n", k, v)
 		hash.internalSet(k, v)
 	}
 
@@ -105,7 +103,6 @@ func (h *HashMap) Itrt(abort <-chan struct{}) <-chan KVP {
 // Iterate loops through all contents
 func (h *HashMap) Iterate() Iterator {
 	i, j := uint32(0), byte(0)
-	// i_last := int(h.count)
 
 	var iterator Iterator
 	iterator = func() (key Key, value Value, next Iterator) {
@@ -141,6 +138,7 @@ func (h *HashMap) Size() uint32 {
 	return h.count
 }
 
+// ForEach iterates over each key-value pair in this collection
 func (h *HashMap) ForEach(predicate ForEachPredicate) {
 	b := &BaseStruct{h, h}
 	b.ForEach(predicate)
@@ -179,7 +177,6 @@ func (h *HashMap) internalSet(key Key, value Value) {
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == 8 {
-		// Oh daer; this bucket haz full!
 		if b.overflow == nil {
 			b.overflow = createEmptyBucket(memory.LargeBlock, hobSize)
 		}
