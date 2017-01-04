@@ -3,7 +3,7 @@ package immutable
 import (
 	"math"
 
-	"github.com/object88/memory"
+	"github.com/object88/immutable/memory"
 )
 
 type bucket struct {
@@ -61,7 +61,9 @@ func (h *HashMap) Get(key Key) Value {
 	index := uint32(0)
 	maskedHash := hashkey >> lobSize
 
-	// fmt.Printf("hashkey: 0x%08x, lobSize: %d, lobMask: 0x%d, selectedBucket: 0x%08x, maskedHash: 0x%08x\n", hashkey, lobSize, lobMask, selectedBucket, maskedHash)
+	// fmt.Printf(
+	// 	"hashkey: 0x%08x, lobSize: %d, lobMask: 0x%d, selectedBucket: 0x%08x, maskedHash: 0x%08x\n",
+	// 	hashkey, lobSize, lobMask, selectedBucket, maskedHash)
 
 	for ; index < bucketCapacity && b.hobs.Read(index) != maskedHash; index++ {
 	}
