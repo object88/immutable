@@ -75,17 +75,11 @@ func (b *BaseStruct) Map(predicate MapPredicate) (*BaseStruct, error) {
 	return mutated, nil
 }
 
-// Reduce operates over the collection contents to produce a single value
-func (b *BaseStruct) Reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
-	if b == nil {
-		return nil, nil
-	}
-
+func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
 	acc := accumulator
 	var err error
 	abort := make(chan struct{})
-	ch := b.Iterate(abort)
-	for kvp := range ch {
+	for kvp := range b.Iterate(abort) {
 		acc, err = predicate(acc, kvp.key, kvp.value)
 		if err != nil {
 			close(abort)

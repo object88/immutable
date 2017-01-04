@@ -96,6 +96,16 @@ func (h *HashMap) Iterate(abort <-chan struct{}) <-chan keyValuePair {
 	return ch
 }
 
+// Reduce operates over the collection contents to produce a single value
+func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
+	if h == nil {
+		return nil, nil
+	}
+
+	b := &BaseStruct{h, h}
+	return b.reduce(predicate, accumulator)
+}
+
 // Size returns the number of items in this collection
 func (h *HashMap) Size() uint32 {
 	if h == nil {
