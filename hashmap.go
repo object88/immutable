@@ -3,7 +3,7 @@ package immutable
 import (
 	"math"
 
-	"github.com/object88/memory"
+	"github.com/object88/immutable/memory"
 )
 
 type bucket struct {
@@ -35,8 +35,8 @@ const (
 // NewHashMap creates a new instance of a HashMap
 func NewHashMap(contents map[Key]Value) *HashMap {
 	initialCount := uint32(len(contents))
-	initialSize := nextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := fffff(initialSize)
+	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
+	lobSize := memory.PowerOf(initialSize)
 
 	buckets := make([]*bucket, initialSize)
 
@@ -53,7 +53,7 @@ func NewHashMap(contents map[Key]Value) *HashMap {
 func (h *HashMap) Get(key Key) Value {
 	hashkey := key.Hash()
 
-	lobSize := fffff(uint32(len(h.buckets)))
+	lobSize := memory.PowerOf(uint32(len(h.buckets)))
 	lobMask := uint32(^(0xffffffff << lobSize))
 
 	selectedBucket := hashkey & lobMask
@@ -61,7 +61,9 @@ func (h *HashMap) Get(key Key) Value {
 	index := uint32(0)
 	maskedHash := hashkey >> lobSize
 
-	// fmt.Printf("hashkey: 0x%08x, lobSize: %d, lobMask: 0x%d, selectedBucket: 0x%08x, maskedHash: 0x%08x\n", hashkey, lobSize, lobMask, selectedBucket, maskedHash)
+	// fmt.Printf(
+	// 	"hashkey: 0x%08x, lobSize: %d, lobMask: 0x%d, selectedBucket: 0x%08x, maskedHash: 0x%08x\n",
+	// 	hashkey, lobSize, lobMask, selectedBucket, maskedHash)
 
 	for ; index < bucketCapacity && b.hobs.Read(index) != maskedHash; index++ {
 	}
@@ -137,8 +139,8 @@ func (h *HashMap) Size() uint32 {
 
 func (h *HashMap) instantiate(size uint32) *BaseStruct {
 	initialCount := size
-	initialSize := nextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := fffff(initialSize)
+	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
+	lobSize := memory.PowerOf(initialSize)
 	buckets := make([]*bucket, initialSize)
 
 	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
@@ -146,7 +148,7 @@ func (h *HashMap) instantiate(size uint32) *BaseStruct {
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	lobSize := fffff(h.size)
+	lobSize := memory.PowerOf(h.size)
 	hobSize := uint32(32 - lobSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 
@@ -177,27 +179,4 @@ func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
 		entries:    make([]entry, bucketCapacity),
 		overflow:   nil,
 	}
-}
-
-// http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-func nextPowerOfTwo(size uint32) uint32 {
-	size--
-	size |= size >> 1
-	size |= size >> 2
-	size |= size >> 4
-	size |= size >> 8
-	size |= size >> 16
-	size++
-	return size
-}
-
-// http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan
-func fffff(value uint32) uint32 {
-	v := value - 1
-
-	c := uint32(0) // c accumulates the total bits set in v
-	for ; v != 0; c++ {
-		v &= v - 1 // clear the least significant bit set
-	}
-	return c
 }
