@@ -72,13 +72,9 @@ func (h *HashMap) Get(key Key) Value {
 	return b.entries[index].value
 }
 
-type KVP struct {
-	key   Key
-	value Value
-}
-
-func (h *HashMap) Itrt(abort <-chan struct{}) <-chan KVP {
-	ch := make(chan KVP)
+// Iterate is a generator function
+func (h *HashMap) Iterate(abort <-chan struct{}) <-chan keyValuePair {
+	ch := make(chan keyValuePair)
 
 	go func() {
 		defer close(ch)
@@ -87,7 +83,7 @@ func (h *HashMap) Itrt(abort <-chan struct{}) <-chan KVP {
 			for b != nil {
 				for j := byte(0); j < b.entryCount; j++ {
 					select {
-					case ch <- KVP{b.entries[j].key, b.entries[j].value}:
+					case ch <- keyValuePair{b.entries[j].key, b.entries[j].value}:
 					case <-abort:
 						return
 					}
@@ -98,36 +94,6 @@ func (h *HashMap) Itrt(abort <-chan struct{}) <-chan KVP {
 		}
 	}()
 	return ch
-}
-
-// Iterate loops through all contents
-func (h *HashMap) Iterate() Iterator {
-	i, j := uint32(0), byte(0)
-
-	var iterator Iterator
-	iterator = func() (key Key, value Value, next Iterator) {
-		for ; i < uint32(len(h.buckets)); i++ {
-			b := h.buckets[i]
-			if b == nil {
-				// fmt.Printf("At %d, empty bucket\n", i)
-				continue
-			}
-			if j == b.entryCount {
-				// fmt.Printf("At [%d:%d], at last entry\n", i, j)
-				j = 0
-				continue
-			}
-			e := b.entries[j]
-			k := e.key
-			v := e.value
-			// fmt.Printf("At [%d:%d], got %s->%s\n", i, j, k, v)
-			j++
-			return k, v, iterator
-		}
-
-		return nil, nil, nil
-	}
-	return iterator
 }
 
 // Size returns the number of items in this collection

@@ -2,8 +2,7 @@ package immutable
 
 // Base describes the low-level set of functions
 type Base interface {
-	Iterate() Iterator
-	Itrt(abort <-chan struct{}) <-chan KVP
+	Iterate(abort <-chan struct{}) <-chan keyValuePair
 	Get(key Key) Value
 	Size() uint32
 }
@@ -26,13 +25,16 @@ func (b *BaseStruct) Filter(predicate FilterPredicate) (*BaseStruct, error) {
 	}
 
 	mutated := b.instantiate(0)
-	for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
-		keep, err := predicate(k, v)
+	abort := make(chan struct{})
+	ch := b.Iterate(abort)
+	for kvp := range ch {
+		keep, err := predicate(kvp.key, kvp.value)
 		if err != nil {
+			close(abort)
 			return nil, err
 		}
 		if keep {
-			mutated.internalSet(k, v)
+			mutated.internalSet(kvp.key, kvp.value)
 		}
 	}
 
@@ -46,7 +48,7 @@ func (b *BaseStruct) ForEach(predicate ForEachPredicate) {
 	}
 
 	abort := make(chan struct{})
-	ch := b.Itrt(abort)
+	ch := b.Iterate(abort)
 	for kvp := range ch {
 		predicate(kvp.key, kvp.value)
 	}
@@ -60,9 +62,8 @@ func (b *BaseStruct) Map(predicate MapPredicate) (*BaseStruct, error) {
 	}
 
 	mutated := b.instantiate(b.Size())
-	// for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
 	abort := make(chan struct{})
-	ch := b.Itrt(abort)
+	ch := b.Iterate(abort)
 	for kvp := range ch {
 		newV, err := predicate(kvp.key, kvp.value)
 		if err != nil {
@@ -82,9 +83,12 @@ func (b *BaseStruct) Reduce(predicate ReducePredicate, accumulator Value) (Value
 
 	acc := accumulator
 	var err error
-	for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
-		acc, err = predicate(acc, k, v)
+	abort := make(chan struct{})
+	ch := b.Iterate(abort)
+	for kvp := range ch {
+		acc, err = predicate(acc, kvp.key, kvp.value)
 		if err != nil {
+			close(abort)
 			return nil, err
 		}
 	}
