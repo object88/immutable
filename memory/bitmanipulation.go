@@ -1,5 +1,7 @@
 package memory
 
+// NextPowerOfTwo takes a positive integer and finds the next greater number
+// that's a power of two.  Code directly copied from
 // http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 func NextPowerOfTwo(size uint32) uint32 {
 	size--
@@ -12,8 +14,11 @@ func NextPowerOfTwo(size uint32) uint32 {
 	return size
 }
 
+// PowerOf takes a power-of-two, and returns the power.  For example, if
+// 8 is passed in, 3 it returned, because 2^3 is 8.  Behavior is undefined if
+// value is not a power-of-two.  Code largely inspired by
 // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan
-func Fffff(value uint32) uint32 {
+func PowerOf(value uint32) uint32 {
 	v := value - 1
 
 	c := uint32(0) // c accumulates the total bits set in v

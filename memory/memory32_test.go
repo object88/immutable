@@ -1,15 +1,12 @@
 package memory
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 )
 
 func Test_AllocateMemories(t *testing.T) {
-	fmt.Printf("HHHEEELLLOOOOO\n")
-
 	m := AllocateMemories(LargeBlock, 32, 1)
 	mem := m.(*Memories32).m
 	blockCount := len(mem)

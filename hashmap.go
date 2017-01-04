@@ -36,7 +36,7 @@ const (
 func NewHashMap(contents map[Key]Value) *HashMap {
 	initialCount := uint32(len(contents))
 	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.Fffff(initialSize)
+	lobSize := memory.PowerOf(initialSize)
 
 	buckets := make([]*bucket, initialSize)
 
@@ -53,7 +53,7 @@ func NewHashMap(contents map[Key]Value) *HashMap {
 func (h *HashMap) Get(key Key) Value {
 	hashkey := key.Hash()
 
-	lobSize := memory.Fffff(uint32(len(h.buckets)))
+	lobSize := memory.PowerOf(uint32(len(h.buckets)))
 	lobMask := uint32(^(0xffffffff << lobSize))
 
 	selectedBucket := hashkey & lobMask
@@ -140,7 +140,7 @@ func (h *HashMap) Size() uint32 {
 func (h *HashMap) instantiate(size uint32) *BaseStruct {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.Fffff(initialSize)
+	lobSize := memory.PowerOf(initialSize)
 	buckets := make([]*bucket, initialSize)
 
 	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
@@ -148,7 +148,7 @@ func (h *HashMap) instantiate(size uint32) *BaseStruct {
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	lobSize := memory.Fffff(h.size)
+	lobSize := memory.PowerOf(h.size)
 	hobSize := uint32(32 - lobSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 
