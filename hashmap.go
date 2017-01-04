@@ -161,6 +161,18 @@ func (h *HashMap) instantiate(size uint32) *BaseStruct {
 	return &BaseStruct{Base: hash, internalFunctions: hash}
 }
 
+func (h *HashMap) instantiateWithContents(size uint32, contents []*keyValuePair) *BaseStruct {
+	newHashMap := h.instantiate(size)
+
+	for _, v := range contents {
+		if v != nil {
+			newHashMap.internalSet(v.key, v.value)
+		}
+	}
+
+	return newHashMap
+}
+
 func (h *HashMap) internalSet(key Key, value Value) {
 	lobSize := memory.PowerOf(h.size)
 	hobSize := uint32(32 - lobSize)

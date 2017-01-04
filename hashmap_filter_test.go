@@ -60,7 +60,7 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 	}
 	value := modified.Get(IntKey(2))
 	if value == nil || value.(int) != 2 {
-		t.Fatal("Incorrect contents of new collection\n")
+		t.Fatalf("Incorrect contents of new collection:\n%s\n", modified)
 	}
 	if invokeCount != 3 {
 		t.Fatalf("Function invoked %d times", invokeCount)
