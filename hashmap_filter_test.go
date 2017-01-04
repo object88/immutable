@@ -1,6 +1,9 @@
 package immutable
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 	var original *HashMap
@@ -64,5 +67,26 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 	}
 	if invokeCount != 3 {
 		t.Fatalf("Function invoked %d times", invokeCount)
+	}
+}
+
+func Test_Hashmap_Filter_WithCancel(t *testing.T) {
+	contents := map[Key]Value{
+		IntKey(1): 1,
+		IntKey(2): 2,
+		IntKey(3): 3,
+	}
+	original := NewHashMap(contents)
+	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
+		if k.(IntKey)%2 == 0 {
+			return false, errors.New("Found an even key")
+		}
+		return v.(int)%2 == 0, nil
+	})
+	if err == nil {
+		t.Fatalf("Failed to return error")
+	}
+	if modified != nil {
+		t.Fatal("Did not return nil collection")
 	}
 }

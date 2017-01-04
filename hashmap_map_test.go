@@ -69,7 +69,7 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 	}
 }
 
-func Test_Hashmap_Map_Cancel(t *testing.T) {
+func Test_Hashmap_Map_WithCancel(t *testing.T) {
 	contents := map[Key]Value{
 		IntKey(1): 1,
 		IntKey(2): 2,
@@ -86,6 +86,6 @@ func Test_Hashmap_Map_Cancel(t *testing.T) {
 		t.Fatalf("Failed to return error")
 	}
 	if modified != nil {
-		t.Fatal("Did not return nil accumulator")
+		t.Fatal("Did not return nil collection")
 	}
 }

@@ -65,7 +65,7 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 	}
 }
 
-func Test_Hashmap_Reduce_Cancel(t *testing.T) {
+func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
 	contents := map[Key]Value{
 		IntKey(1): 1,
 		IntKey(2): 2,
