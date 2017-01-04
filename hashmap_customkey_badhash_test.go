@@ -5,6 +5,11 @@ import (
 	"testing"
 )
 
+// This suite of tests is designed to test the bucket overflow behavior.
+// By using a `Hash` function which only ever resolves into one of two
+// hash keys, all entries will end up in one or two buckets.  With a
+// sufficiently large dataset, this will cause bucket overflow to be used.
+
 type MyBadKey struct {
 	value int
 }
@@ -20,7 +25,7 @@ func (k MyBadKey) String() string {
 	return fmt.Sprintf("%d", k.value)
 }
 
-func Test_Hashmap_CustomKey_BadHash(t *testing.T) {
+func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	max := 100
 	data := make(map[Key]Value, max)
 	for i := 0; i < max; i++ {
@@ -44,6 +49,23 @@ func Test_Hashmap_CustomKey_BadHash(t *testing.T) {
 	for k, v := range data {
 		if !v.(bool) {
 			t.Fatalf("At %s, not visited\n", k)
+		}
+	}
+}
+
+func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
+	max := 100
+	contents := make(map[Key]Value, max)
+	for i := 0; i < max; i++ {
+		contents[MyBadKey{i}] = i
+	}
+
+	original := NewHashMap(contents)
+
+	for k, v := range contents {
+		result := original.Get(k)
+		if result != v {
+			t.Fatalf("At %s, expected %d, got %d\n", k, v, result)
 		}
 	}
 }
