@@ -2,7 +2,6 @@ package immutable
 
 // Base describes the low-level set of functions
 type Base interface {
-	// Iterate() Iterator
 	Iterate(abort <-chan struct{}) <-chan keyValuePair
 	Get(key Key) Value
 	Size() uint32
@@ -26,7 +25,6 @@ func (b *BaseStruct) Filter(predicate FilterPredicate) (*BaseStruct, error) {
 	}
 
 	mutated := b.instantiate(0)
-	// for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
 	abort := make(chan struct{})
 	ch := b.Iterate(abort)
 	for kvp := range ch {
@@ -85,7 +83,6 @@ func (b *BaseStruct) Reduce(predicate ReducePredicate, accumulator Value) (Value
 
 	acc := accumulator
 	var err error
-	// for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
 	abort := make(chan struct{})
 	ch := b.Iterate(abort)
 	for kvp := range ch {

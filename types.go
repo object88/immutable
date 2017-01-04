@@ -8,9 +8,6 @@ type FilterPredicate func(key Key, value Value) (bool, error)
 // ForEachPredicate describes the predicate function used by the ForEach method
 type ForEachPredicate func(key Key, value Value)
 
-// Iterator is a function returned from Iterate
-type Iterator func() (key Key, value Value, next Iterator)
-
 // Key is a key
 type Key interface {
 	fmt.Stringer
