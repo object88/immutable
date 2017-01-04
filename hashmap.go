@@ -72,10 +72,38 @@ func (h *HashMap) Get(key Key) Value {
 	return b.entries[index].value
 }
 
+type KVP struct {
+	key   Key
+	value Value
+}
+
+func (h *HashMap) Itrt(abort <-chan struct{}) <-chan KVP {
+	ch := make(chan KVP)
+
+	go func() {
+		defer close(ch)
+		for i := 0; i < len(h.buckets); i++ {
+			b := h.buckets[i]
+			for b != nil {
+				for j := byte(0); j < b.entryCount; j++ {
+					select {
+					case ch <- KVP{b.entries[j].key, b.entries[j].value}:
+					case <-abort:
+						return
+					}
+				}
+
+				b = b.overflow
+			}
+		}
+	}()
+	return ch
+}
+
 // Iterate loops through all contents
 func (h *HashMap) Iterate() Iterator {
 	i, j := uint32(0), byte(0)
-	// i_last := int(h.count)
+
 	var iterator Iterator
 	iterator = func() (key Key, value Value, next Iterator) {
 		for ; i < uint32(len(h.buckets)); i++ {
@@ -110,6 +138,12 @@ func (h *HashMap) Size() uint32 {
 	return h.count
 }
 
+// ForEach iterates over each key-value pair in this collection
+func (h *HashMap) ForEach(predicate ForEachPredicate) {
+	b := &BaseStruct{h, h}
+	b.ForEach(predicate)
+}
+
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
 func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
@@ -139,17 +173,27 @@ func (h *HashMap) internalSet(key Key, value Value) {
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		// Create the bucket.
-		b = &bucket{
-			entryCount: 0,
-			hobs:       memory.AllocateMemories(memory.LargeBlock, hobSize, 8),
-			entries:    make([]entry, bucketCapacity),
-			overflow:   nil,
-		}
+		b = createEmptyBucket(memory.LargeBlock, hobSize)
 		h.buckets[selectedBucket] = b
+	}
+	for b.entryCount == 8 {
+		if b.overflow == nil {
+			b.overflow = createEmptyBucket(memory.LargeBlock, hobSize)
+		}
+		b = b.overflow
 	}
 	b.entries[b.entryCount] = entry{key, value}
 	b.hobs.Assign(uint32(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
+}
+
+func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
+	return &bucket{
+		entryCount: 0,
+		hobs:       memory.AllocateMemories(blockSize, hobSize, 8),
+		entries:    make([]entry, bucketCapacity),
+		overflow:   nil,
+	}
 }
 
 // http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2

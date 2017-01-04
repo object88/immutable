@@ -21,20 +21,29 @@ func (k MyBadKey) String() string {
 }
 
 func Test_Hashmap_CustomKey_BadHash(t *testing.T) {
-	data := map[Key]Value{
-		MyBadKey{0}: 0,
-		MyBadKey{1}: 1,
-		MyBadKey{2}: 2,
-		MyBadKey{3}: 3,
-		MyBadKey{4}: 4,
-		MyBadKey{5}: 5,
-		MyBadKey{6}: 6,
-		MyBadKey{7}: 7,
-		MyBadKey{8}: 8,
-		MyBadKey{9}: 9,
+	max := 100
+	data := make(map[Key]Value, max)
+	for i := 0; i < max; i++ {
+		data[MyBadKey{i}] = false
 	}
 	original := NewHashMap(data)
 	if original == nil {
 		t.Fatal("NewHashMap returned nil\n")
+	}
+	size := original.Size()
+	if size != uint32(len(data)) {
+		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
+	}
+	original.ForEach(func(k Key, v Value) {
+		if v.(bool) {
+			t.Fatalf("At %s, already visited\n", k)
+		}
+		data[k] = true
+	})
+
+	for k, v := range data {
+		if !v.(bool) {
+			t.Fatalf("At %s, not visited\n", k)
+		}
 	}
 }
