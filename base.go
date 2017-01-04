@@ -54,13 +54,7 @@ func (b *BaseStruct) ForEach(predicate ForEachPredicate) {
 	}
 }
 
-// Map iterates over the contents of a collection and calls the supplied predicate.
-// The return value is a new map with the results of the predicate function.
-func (b *BaseStruct) Map(predicate MapPredicate) (*BaseStruct, error) {
-	if b == nil {
-		return nil, nil
-	}
-
+func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
 	mutated := b.instantiate(b.Size())
 	abort := make(chan struct{})
 	ch := b.Iterate(abort)

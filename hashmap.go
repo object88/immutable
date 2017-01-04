@@ -96,6 +96,27 @@ func (h *HashMap) Iterate(abort <-chan struct{}) <-chan keyValuePair {
 	return ch
 }
 
+// ForEach iterates over each key-value pair in this collection
+func (h *HashMap) ForEach(predicate ForEachPredicate) {
+	b := &BaseStruct{h, h}
+	b.ForEach(predicate)
+}
+
+// Map iterates over the contents of a collection and calls the supplied predicate.
+// The return value is a new map with the results of the predicate function.
+func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
+	if h == nil {
+		return nil, nil
+	}
+
+	b := &BaseStruct{h, h}
+	n, e := b.mapping(predicate)
+	if e != nil {
+		return nil, e
+	}
+	return n.Base.(*HashMap), nil
+}
+
 // Reduce operates over the collection contents to produce a single value
 func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
 	if h == nil {
@@ -112,20 +133,6 @@ func (h *HashMap) Size() uint32 {
 		return 0
 	}
 	return h.count
-}
-
-// ForEach iterates over each key-value pair in this collection
-func (h *HashMap) ForEach(predicate ForEachPredicate) {
-	b := &BaseStruct{h, h}
-	b.ForEach(predicate)
-}
-
-// Map iterates over the contents of a collection and calls the supplied predicate.
-// The return value is a new map with the results of the predicate function.
-func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
-	b := &BaseStruct{h, h}
-	n, e := b.Map(predicate)
-	return n.Base.(*HashMap), e
 }
 
 func (h *HashMap) instantiate(size uint32) *BaseStruct {
