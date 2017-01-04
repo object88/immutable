@@ -47,12 +47,13 @@ func Test_Hashmap_Iterate(t *testing.T) {
 	data := map[Key]Value{IntKey(1): false, IntKey(2): false, IntKey(3): false, IntKey(4): false, IntKey(5): false, IntKey(6): false}
 	original := NewHashMap(data)
 
-	for k, v, i := original.Iterate()(); i != nil; k, v, i = i() {
+	// for k, v, i := original.Iterate()(); i != nil; k, v, i = i() {
+	original.ForEach(func(k Key, v Value) {
 		if v.(bool) {
 			t.Fatalf("At %s, already visited\n", k)
 		}
 		data[k] = true
-	}
+	})
 
 	for k, v := range data {
 		if !v.(bool) {
@@ -66,7 +67,8 @@ func Test_Hashmap_Map(t *testing.T) {
 	modified, _ := original.Map(func(k Key, v Value) (Value, error) {
 		return fmt.Sprintf("[%s -> %s]", k, v), nil
 	})
-	for k, v, i := modified.Iterate()(); i != nil; k, v, i = i() {
+	// for k, v, i := modified.Iterate()(); i != nil; k, v, i = i() {
+	modified.ForEach(func(k Key, v Value) {
 		fmt.Printf("%s -> %s\n", k, v)
-	}
+	})
 }
