@@ -3,6 +3,7 @@ package immutable
 // Base describes the low-level set of functions
 type Base interface {
 	Iterate() Iterator
+	Itrt(abort <-chan struct{}) <-chan KVP
 	Get(key Key) Value
 	Size() uint32
 }
@@ -44,8 +45,10 @@ func (b *BaseStruct) ForEach(predicate ForEachPredicate) {
 		return
 	}
 
-	for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
-		predicate(k, v)
+	abort := make(chan struct{})
+	ch := b.Itrt(abort)
+	for kvp := range ch {
+		predicate(kvp.key, kvp.value)
 	}
 }
 
@@ -57,12 +60,16 @@ func (b *BaseStruct) Map(predicate MapPredicate) (*BaseStruct, error) {
 	}
 
 	mutated := b.instantiate(b.Size())
-	for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
-		newV, err := predicate(k, v)
+	// for k, v, i := b.Iterate()(); i != nil; k, v, i = i() {
+	abort := make(chan struct{})
+	ch := b.Itrt(abort)
+	for kvp := range ch {
+		newV, err := predicate(kvp.key, kvp.value)
 		if err != nil {
+			close(abort)
 			return nil, err
 		}
-		mutated.internalSet(k, newV)
+		mutated.internalSet(kvp.key, newV)
 	}
 	return mutated, nil
 }
