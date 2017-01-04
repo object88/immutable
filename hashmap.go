@@ -98,10 +98,24 @@ func (h *HashMap) Iterate(abort <-chan struct{}) <-chan keyValuePair {
 	return ch
 }
 
+// Filter returns a subset of the collection, based on the predicate supplied
+func (h *HashMap) Filter(predicate FilterPredicate) (*HashMap, error) {
+	if h == nil {
+		return nil, nil
+	}
+
+	b := &BaseStruct{h, h}
+	result, err := b.filter(predicate)
+	if err != nil {
+		return nil, err
+	}
+	return result.Base.(*HashMap), nil
+}
+
 // ForEach iterates over each key-value pair in this collection
 func (h *HashMap) ForEach(predicate ForEachPredicate) {
 	b := &BaseStruct{h, h}
-	b.ForEach(predicate)
+	b.forEach(predicate)
 }
 
 // Map iterates over the contents of a collection and calls the supplied predicate.
@@ -112,11 +126,11 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 	}
 
 	b := &BaseStruct{h, h}
-	n, e := b.mapping(predicate)
-	if e != nil {
-		return nil, e
+	result, err := b.mapping(predicate)
+	if err != nil {
+		return nil, err
 	}
-	return n.Base.(*HashMap), nil
+	return result.Base.(*HashMap), nil
 }
 
 // Reduce operates over the collection contents to produce a single value

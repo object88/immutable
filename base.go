@@ -19,12 +19,12 @@ type BaseStruct struct {
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
-func (b *BaseStruct) Filter(predicate FilterPredicate) (*BaseStruct, error) {
+func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
 	if b == nil {
 		return nil, nil
 	}
 
-	mutated := b.instantiate(0)
+	mutated := b.instantiate(b.Size())
 	abort := make(chan struct{})
 	ch := b.Iterate(abort)
 	for kvp := range ch {
@@ -41,8 +41,7 @@ func (b *BaseStruct) Filter(predicate FilterPredicate) (*BaseStruct, error) {
 	return mutated, nil
 }
 
-// ForEach iterates over all collection contents
-func (b *BaseStruct) ForEach(predicate ForEachPredicate) {
+func (b *BaseStruct) forEach(predicate ForEachPredicate) {
 	if b == nil {
 		return
 	}
