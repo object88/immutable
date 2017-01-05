@@ -36,7 +36,7 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 		t.Fatal("NewHashMap returned nil\n")
 	}
 	size := original.Size()
-	if size != uint32(len(data)) {
+	if size != len(data) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
 	original.ForEach(func(k Key, v Value) {

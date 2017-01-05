@@ -20,10 +20,10 @@ type entry struct {
 
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
-	count   uint32
-	size    uint32
+	count   int
+	size    int
 	buckets []*bucket
-	lobSize uint32
+	lobSize uint8
 }
 
 const (
@@ -34,13 +34,7 @@ const (
 
 // NewHashMap creates a new instance of a HashMap
 func NewHashMap(contents map[Key]Value) *HashMap {
-	initialCount := uint32(len(contents))
-	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.PowerOf(initialSize)
-
-	buckets := make([]*bucket, initialSize)
-
-	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
+	hash := createHashMap(len(contents))
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -57,7 +51,7 @@ func (h *HashMap) Get(key Key) Value {
 
 	hashkey := key.Hash()
 
-	lobSize := memory.PowerOf(uint32(len(h.buckets)))
+	lobSize := uint32(memory.PowerOf(len(h.buckets)))
 	lobMask := uint32(^(0xffffffff << lobSize))
 
 	selectedBucket := hashkey & lobMask
@@ -66,7 +60,7 @@ func (h *HashMap) Get(key Key) Value {
 
 	for b != nil {
 		for index := byte(0); index < b.entryCount; index++ {
-			if b.hobs.Read(uint32(index)) == maskedHash && b.entries[index].key == key {
+			if uint32(b.hobs.Read(uint64(index))) == maskedHash && b.entries[index].key == key {
 				return b.entries[index].value
 			}
 		}
@@ -123,7 +117,7 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	size := h.Size() + 1
-	result := h.instantiate(size)
+	result := h.instantiate(size, nil)
 
 	if h != nil {
 		abort := make(chan struct{})
@@ -169,7 +163,7 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 	}
 
 	if h.count == 0 {
-		return h.instantiate(0).Base.(*HashMap), nil
+		return createHashMap(0), nil
 	}
 
 	if h.Get(key) == nil {
@@ -178,10 +172,10 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 	size := h.Size() - 1
 	if size == 0 {
-		return h.instantiate(0).Base.(*HashMap), nil
+		return createHashMap(0), nil
 	}
 
-	result := h.instantiate(size)
+	result := createHashMap(size)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
 		if kvp.key != key {
@@ -189,41 +183,31 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 		}
 	}
 
-	return result.Base.(*HashMap), nil
+	return result, nil
 }
 
 // Size returns the number of items in this collection
-func (h *HashMap) Size() uint32 {
+func (h *HashMap) Size() int {
 	if h == nil {
 		return 0
 	}
 	return h.count
 }
 
-func (h *HashMap) instantiate(size uint32) *BaseStruct {
-	initialCount := size
-	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.PowerOf(initialSize)
-	buckets := make([]*bucket, initialSize)
-
-	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
-	return &BaseStruct{hash}
-}
-
-func (h *HashMap) instantiateWithContents(size uint32, contents []*keyValuePair) *BaseStruct {
-	newHashMap := h.instantiate(size)
+func (*HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
+	hash := createHashMap(size)
 
 	for _, v := range contents {
 		if v != nil {
-			newHashMap.internalSet(v.key, v.value)
+			hash.internalSet(v.key, v.value)
 		}
 	}
 
-	return newHashMap
+	return &BaseStruct{hash}
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	lobSize := memory.PowerOf(h.size)
+	lobSize := uint32(memory.PowerOf(h.size))
 	hobSize := uint32(32 - lobSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 
@@ -243,8 +227,17 @@ func (h *HashMap) internalSet(key Key, value Value) {
 		b = b.overflow
 	}
 	b.entries[b.entryCount] = entry{key, value}
-	b.hobs.Assign(uint32(b.entryCount), hashkey>>h.lobSize)
+	b.hobs.Assign(uint64(b.entryCount), uint64(hashkey>>h.lobSize))
 	b.entryCount++
+}
+
+func createHashMap(size int) *HashMap {
+	initialCount := size
+	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
+	lobSize := memory.PowerOf(initialSize)
+	buckets := make([]*bucket, initialSize)
+
+	return &HashMap{initialCount, int(initialSize), buckets, lobSize}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {

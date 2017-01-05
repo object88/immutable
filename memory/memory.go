@@ -2,8 +2,8 @@ package memory
 
 // Memories is a interface over Memories32 and Memories8
 type Memories interface {
-	Assign(index uint32, value uint32)
-	Read(index uint32) uint32
+	Assign(index uint64, value uint64)
+	Read(index uint64) uint64
 }
 
 // AllocateMemories creates a block of memory using the given block size

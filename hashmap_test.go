@@ -18,7 +18,7 @@ func Test_Hashmap(t *testing.T) {
 		IntKey(26): "zz",
 	}
 	original := NewHashMap(data)
-	if original.Size() != uint32(len(data)) {
+	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}
 	fmt.Println(original.String())
@@ -48,7 +48,18 @@ func Test_HashMap_Empty_Create(t *testing.T) {
 func Test_HashMap_Empty_Size(t *testing.T) {
 	original := NewHashMap(map[Key]Value{})
 	size := original.Size()
-	if 0 != size {
+	if size != 0 {
+		t.Fatalf("Expected 0 size, got %d\n", size)
+	}
+}
+
+func Test_Hashmap_Create_WithNilContents(t *testing.T) {
+	original := NewHashMap(nil)
+	if nil == original {
+		t.Fatal("NewHashMap with nil argument returned nil")
+	}
+	size := original.Size()
+	if size != 0 {
 		t.Fatalf("Expected 0 size, got %d\n", size)
 	}
 }
@@ -112,7 +123,7 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
 	}
 	size := modified.Size()
-	if size != uint32(len(contents)+1) {
+	if size != len(contents)+1 {
 		t.Fatalf("New hashmap has size %d; expected %d", size, len(contents)+1)
 	}
 	for k, v := range contents {
@@ -204,7 +215,7 @@ func Test_Hashmap_Remove_WithContents(t *testing.T) {
 		t.Fatal("Nil returned from remove")
 	}
 	size := modified.Size()
-	if size != uint32(len(contents)-1) {
+	if size != len(contents)-1 {
 		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents)-1, size)
 	}
 	result1 := modified.Get(key1)
@@ -253,7 +264,7 @@ func Test_Hashmap_Remove_Miss(t *testing.T) {
 		t.Fatal("Nil returned from remove")
 	}
 	size := modified.Size()
-	if size != uint32(len(contents)) {
+	if size != len(contents) {
 		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents), size)
 	}
 	for k, v := range contents {

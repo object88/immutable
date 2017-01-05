@@ -34,6 +34,6 @@ Collections have some common functions for operations across the entire collecti
 
 `Reduce`
 
-`Size() uint32`
+`Size() int`
 
 This size method returns the number of key-value pairs in a collection.

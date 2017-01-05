@@ -22,9 +22,9 @@ type Memories8 struct {
 // Remainging bits write to p + n + 1, shifted 16 - remaining
 
 // Assign sets a value to the byte array at the given index
-func (m *Memories8) Assign(index uint32, value uint32) {
-	bitsRemaining := m.bitsPerEntry
-	offset := m.bitsPerEntry * index
+func (m *Memories8) Assign(index uint64, value uint64) {
+	bitsRemaining := uint64(m.bitsPerEntry)
+	offset := bitsRemaining * index
 	byteOffset := offset / bitsInSmallBlock
 	bitOffset := offset % bitsInSmallBlock
 
@@ -36,7 +36,7 @@ func (m *Memories8) Assign(index uint32, value uint32) {
 	}
 }
 
-func writeFirstBits8(memory []smallBlock, bitsRemaining, byteOffset, bitOffset, value uint32) (nextBitsRemaining, nextByteOffset, nextReadBitOffset uint32) {
+func writeFirstBits8(memory []smallBlock, bitsRemaining, byteOffset, bitOffset, value uint64) (nextBitsRemaining, nextByteOffset, nextReadBitOffset uint64) {
 	// i := memory[byteOffset]
 	fmt.Printf("byteOffset: %d, bitOffset: %d, bitsRemaining: %d\n", byteOffset, bitOffset, bitsRemaining)
 	writeBitCount := bitsInSmallBlock - bitOffset
@@ -56,15 +56,15 @@ func writeFirstBits8(memory []smallBlock, bitsRemaining, byteOffset, bitOffset, 
 	return bitsRemaining - writeBitCount, byteOffset + 1, writeBitCount
 }
 
-func writeNextBits32(memory []smallBlock, bitsRemaining, byteOffset, value, readBitOffset uint32) (nextBitsRemaining, nextByteOffset, nextReadBitOffset uint32) {
+func writeNextBits32(memory []smallBlock, bitsRemaining, byteOffset, value, readBitOffset uint64) (nextBitsRemaining, nextByteOffset, nextReadBitOffset uint64) {
 	// i := memory[byteOffset]
 	fmt.Printf("byteOffset: %d, bitsRemaining: %d, readBitOffset: %d\n", byteOffset, bitsRemaining, readBitOffset)
-	writeBitCount := uint32(bitsInSmallBlock)
+	writeBitCount := uint64(bitsInSmallBlock)
 	if writeBitCount > bitsRemaining {
 		writeBitCount = bitsRemaining
 	}
 	// mask32 := generateMask32(writeBitCount, readBitOffset)
-	mask32 := uint32(^(0xff << writeBitCount)) << readBitOffset
+	mask32 := uint64(^(0xff << writeBitCount)) << readBitOffset
 	v := byte(value&mask32) >> readBitOffset
 	fmt.Printf("value: %016b, mask: %08b, v: %08b\n", value, mask32, v)
 	// memory[byteOffset] = writeBits(i, byte(v), byte(writeBitCount), 0)
@@ -77,9 +77,9 @@ func writeNextBits32(memory []smallBlock, bitsRemaining, byteOffset, value, read
 }
 
 // Reads the value at a particular offset
-func (m *Memories8) Read(index uint32) uint32 {
-	bitsRemaining := m.bitsPerEntry
-	offset := m.bitsPerEntry * index
+func (m *Memories8) Read(index uint64) uint64 {
+	bitsRemaining := uint64(m.bitsPerEntry)
+	offset := bitsRemaining * index
 	bitOffset := offset % bitsInSmallBlock
 	byteOffset := offset / bitsInSmallBlock
 	// fmt.Printf("\nbitOffset: %d, byteOffset: %d\n", bitOffset, byteOffset)
@@ -95,7 +95,7 @@ func (m *Memories8) Read(index uint32) uint32 {
 	return result
 }
 
-func readFirstBits(memory []smallBlock, bitsRemaining, byteOffset, bitOffset uint32) (result, nextBitsRemaining, nextByteOffset uint32) {
+func readFirstBits(memory []smallBlock, bitsRemaining, byteOffset, bitOffset uint64) (result, nextBitsRemaining, nextByteOffset uint64) {
 	// fmt.Printf("Reading first byte: %d, %d\n", byteOffset, bitOffset)
 	i := byte(memory[byteOffset])
 	readBitCount := bitsInSmallBlock - bitOffset
@@ -103,22 +103,22 @@ func readFirstBits(memory []smallBlock, bitsRemaining, byteOffset, bitOffset uin
 		readBitCount = bitsRemaining
 	}
 	b := readBits(i, generateMask(byte(readBitCount), byte(bitOffset)))
-	result = uint32(b) >> bitOffset
+	result = uint64(b) >> bitOffset
 
 	// fmt.Printf("bitsRemaining: %d, readBitCount: %d\n", bitsRemaining, readBitCount)
 	// fmt.Printf("Returning 0x%x, %d, %d\n", result, bitsRemaining-readBitCount, byteOffset+1)
 	return result, bitsRemaining - readBitCount, byteOffset + 1
 }
 
-func readNextBits(initial uint32, memory []smallBlock, bitsRemaining, byteOffset uint32) (result, nextBitsRemaining, nextByteoffset uint32) {
+func readNextBits(initial uint64, memory []smallBlock, bitsRemaining, byteOffset uint64) (result, nextBitsRemaining, nextByteoffset uint64) {
 	// fmt.Printf("Reading next byte: %d\n", byteOffset)
 	i := byte(memory[byteOffset])
-	readBitCount := uint32(bitsInSmallBlock)
+	readBitCount := uint64(bitsInSmallBlock)
 	if readBitCount > bitsRemaining {
 		readBitCount = bitsRemaining
 	}
 	b := readBits(i, generateMask(byte(readBitCount), 0))
-	result = (initial << readBitCount) | uint32(b)
+	result = (initial << readBitCount) | uint64(b)
 
 	// fmt.Printf("Returning 0x%x, %d, %d\n", result, bitsRemaining-readBitCount, byteOffset+1)
 	return result, bitsRemaining - readBitCount, byteOffset + 1

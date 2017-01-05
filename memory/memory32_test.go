@@ -65,7 +65,7 @@ type readOptions struct {
 	initInvert bool
 }
 
-func evaluateRead(t *testing.T, bitCount, count, readIndex, expected uint32, assignment memoryMap, options *readOptions) {
+func evaluateRead(t *testing.T, bitCount, count uint32, readIndex, expected uint64, assignment memoryMap, options *readOptions) {
 	// fmt.Printf("\nReviewing %d/%d/0x%08x\n", bitCount, count, expected)
 	m := AllocateMemories(LargeBlock, bitCount, count)
 	mem := m.(*Memories32).m
@@ -116,7 +116,7 @@ type assignOptions struct {
 	initInvert bool
 }
 
-func evaluateAssign(t *testing.T, bitCount, count, writeIndex, value uint32, assessment memoryMap, options *assignOptions) {
+func evaluateAssign(t *testing.T, bitCount, count uint32, writeIndex, value uint64, assessment memoryMap, options *assignOptions) {
 	m := AllocateMemories(LargeBlock, bitCount, count)
 	mem := m.(*Memories32).m
 	if options != nil && options.initInvert {
@@ -135,7 +135,7 @@ func evaluateAssign(t *testing.T, bitCount, count, writeIndex, value uint32, ass
 
 func Test_WriteAndRead2(t *testing.T) {
 	count := 4
-	set := make([]uint32, count)
+	set := make([]uint64, count)
 	for i := 0; i < count; i++ {
 		set[i] = 0x55555555
 	}
@@ -143,11 +143,11 @@ func Test_WriteAndRead2(t *testing.T) {
 	m := AllocateMemories(LargeBlock, 31, 4)
 
 	for k, v := range set {
-		m.Assign(uint32(k), v)
+		m.Assign(uint64(k), v)
 	}
 
 	for k, v := range set {
-		result := m.Read(uint32(k))
+		result := m.Read(uint64(k))
 		if result != v {
 			t.Fatalf("At %d\nexpected %032b\nreceived %032b\n", k, v, result)
 		}
@@ -157,19 +157,19 @@ func Test_WriteAndRead2(t *testing.T) {
 func Test_WriteAndRead(t *testing.T) {
 	count := 4
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	set := make([]uint32, count)
+	set := make([]uint64, count)
 	for i := 0; i < count; i++ {
-		set[i] = uint32(r.Int31()) & 0x7fffffff
+		set[i] = uint64(r.Int31()) & 0x7fffffff
 	}
 
 	m := AllocateMemories(LargeBlock, 31, 4)
 
 	for k, v := range set {
-		m.Assign(uint32(k), v)
+		m.Assign(uint64(k), v)
 	}
 
 	for k, v := range set {
-		result := m.Read(uint32(k))
+		result := m.Read(uint64(k))
 		if result != v {
 			t.Fatalf("At %d\nexpected %032b\nreceived %032b\n", k, v, result)
 		}
