@@ -161,6 +161,37 @@ func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, e
 	return b.reduce(predicate, accumulator)
 }
 
+// Remove returns a copy of the provided HashMap with the specified element
+// removed.
+func (h *HashMap) Remove(key Key) (*HashMap, error) {
+	if h == nil {
+		return nil, nil
+	}
+
+	if h.count == 0 {
+		return h.instantiate(0).Base.(*HashMap), nil
+	}
+
+	if h.Get(key) == nil {
+		return h, nil
+	}
+
+	size := h.Size() - 1
+	if size == 0 {
+		return h.instantiate(0).Base.(*HashMap), nil
+	}
+
+	result := h.instantiate(size)
+	abort := make(chan struct{})
+	for kvp := range h.iterate(abort) {
+		if kvp.key != key {
+			result.internalSet(kvp.key, kvp.value)
+		}
+	}
+
+	return result.Base.(*HashMap), nil
+}
+
 // Size returns the number of items in this collection
 func (h *HashMap) Size() uint32 {
 	if h == nil {
