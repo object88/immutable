@@ -58,20 +58,21 @@ func (h *HashMap) Get(key Key) Value {
 
 	selectedBucket := hashkey & lobMask
 	b := h.buckets[selectedBucket]
-	index := uint32(0)
 	maskedHash := hashkey >> lobSize
 
 	// fmt.Printf(
 	// 	"hashkey: 0x%08x, lobSize: %d, lobMask: 0x%d, selectedBucket: 0x%08x, maskedHash: 0x%08x\n",
 	// 	hashkey, lobSize, lobMask, selectedBucket, maskedHash)
 
-	for ; index < bucketCapacity && b.hobs.Read(index) != maskedHash; index++ {
+	for b != nil {
+		for index := byte(0); index < b.entryCount; index++ {
+			if b.hobs.Read(uint32(index)) == maskedHash && b.entries[index].key == key {
+				return b.entries[index].value
+			}
+		}
+		b = b.overflow
 	}
-	if index == bucketCapacity {
-		// fmt.Printf("Returning nil...\n")
-		return nil
-	}
-	return b.entries[index].value
+	return nil
 }
 
 // Iterate is a generator function
