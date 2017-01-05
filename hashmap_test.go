@@ -6,7 +6,17 @@ import (
 )
 
 func Test_Hashmap(t *testing.T) {
-	data := map[Key]Value{IntKey(1): "aa", IntKey(2): "bb", IntKey(3): "cc", IntKey(4): "dd", IntKey(5): "ee", IntKey(6): "ff", IntKey(7): "gg", IntKey(8): "hh", IntKey(26): "zz"}
+	data := map[Key]Value{
+		IntKey(1):  "aa",
+		IntKey(2):  "bb",
+		IntKey(3):  "cc",
+		IntKey(4):  "dd",
+		IntKey(5):  "ee",
+		IntKey(6):  "ff",
+		IntKey(7):  "gg",
+		IntKey(8):  "hh",
+		IntKey(26): "zz",
+	}
 	original := NewHashMap(data)
 	if original.Size() != uint32(len(data)) {
 		t.Fatalf("Incorrect size")
@@ -147,6 +157,90 @@ func Test_Hashmap_Get_Miss(t *testing.T) {
 	result := original.Get(IntKey(2))
 	if result != nil {
 		t.Fatalf("Request for miss key returned %s", result)
+	}
+}
+
+func Test_Hashmap_Remove_WithUnassigned(t *testing.T) {
+	var original *HashMap
+	key := IntKey(4)
+	modified, error := original.Remove(key)
+	if nil != error {
+		t.Fatalf("Remove from nil hashmap returned error %s\n", error)
+	}
+	if nil != modified {
+		t.Fatal("Remove from nil hashmap did not return nil\n")
+	}
+}
+
+func Test_Hashmap_Remove_WithEmpty(t *testing.T) {
+	original := NewHashMap(map[Key]Value{})
+	key := IntKey(4)
+	modified, error := original.Remove(key)
+	if nil != error {
+		t.Fatalf("Remove from empty hashmap returned error %s\n", error)
+	}
+	if nil == modified {
+		t.Fatal("Remove from empty hashmap returned nil\n")
+	}
+	size := modified.Size()
+	if size != 0 {
+		fmt.Printf("Remove from empty hashmap returned a non-empty hashmap: %s\n", modified)
+	}
+}
+
+func Test_Hashmap_Remove_WithContents(t *testing.T) {
+	key1, key2 := IntKey(0), IntKey(1)
+	value1, value2 := "a", "b"
+	contents := map[Key]Value{
+		key1: value1,
+		key2: value2,
+	}
+	original := NewHashMap(contents)
+	modified, error := original.Remove(key2)
+	if error != nil {
+		t.Fatalf("Error returned from remove: %s", error)
+	}
+	if modified == nil {
+		t.Fatal("Nil returned from remove")
+	}
+	size := modified.Size()
+	if size != uint32(len(contents)-1) {
+		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents)-1, size)
+	}
+	result1 := modified.Get(key1)
+	if result1 != value1 {
+		t.Fatalf("Value returned from key %s is incorrect; expected %s, got %s\n", key1, value1, result1)
+	}
+	result2 := modified.Get(key2)
+	if result2 != nil {
+		t.Fatalf("Got value from key %s; got %s, expected nil\n", key2, result2)
+	}
+}
+
+func Test_Hashmap_Remove_Miss(t *testing.T) {
+	key1, key2, key3 := IntKey(0), IntKey(1), IntKey(2)
+	value1, value2 := "a", "b"
+	contents := map[Key]Value{
+		key1: value1,
+		key2: value2,
+	}
+	original := NewHashMap(contents)
+	modified, error := original.Remove(key3)
+	if error != nil {
+		t.Fatalf("Error returned from remove: %s", error)
+	}
+	if modified == nil {
+		t.Fatal("Nil returned from remove")
+	}
+	size := modified.Size()
+	if size != uint32(len(contents)) {
+		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents), size)
+	}
+	for k, v := range contents {
+		result := modified.Get(k)
+		if result != v {
+			t.Fatalf("Value returned from key %s is incorrect; expected %s, got %s\n", k, v, result)
+		}
 	}
 }
 
