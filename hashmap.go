@@ -122,21 +122,17 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
-	if h == nil || h.Size() == 0 {
-		result := h.instantiate(1)
-		result.internalSet(key, value)
-		return result.Base.(*HashMap), nil
-	}
-
 	size := h.Size() + 1
 	result := h.instantiate(size)
 
-	abort := make(chan struct{})
-	for kvp := range h.iterate(abort) {
-		result.internalSet(kvp.key, kvp.value)
+	if h != nil {
+		abort := make(chan struct{})
+		for kvp := range h.iterate(abort) {
+			result.internalSet(kvp.key, kvp.value)
+		}
 	}
-	result.internalSet(key, value)
 
+	result.internalSet(key, value)
 	return result.Base.(*HashMap), nil
 }
 
