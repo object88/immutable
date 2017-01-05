@@ -53,11 +53,17 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	}
 }
 
+type MyIntValue int
+
+func (v MyIntValue) String() string {
+	return fmt.Sprintf("%d", v)
+}
+
 func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	max := 100
 	contents := make(map[Key]Value, max)
 	for i := 0; i < max; i++ {
-		contents[MyBadKey{i}] = i
+		contents[MyBadKey{i}] = MyIntValue(i)
 	}
 
 	original := NewHashMap(contents)
@@ -65,7 +71,7 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	for k, v := range contents {
 		result := original.Get(k)
 		if result != v {
-			t.Fatalf("At %s, expected %d, got %d\n", k, v, result)
+			t.Fatalf("At %s, expected %d, got %d\n%#v", k, v, result, original)
 		}
 	}
 }
