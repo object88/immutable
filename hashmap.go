@@ -51,6 +51,10 @@ func NewHashMap(contents map[Key]Value) *HashMap {
 
 // Get returns the value for the given key
 func (h *HashMap) Get(key Key) Value {
+	if h == nil || h.count == 0 {
+		return nil
+	}
+
 	hashkey := key.Hash()
 
 	lobSize := memory.PowerOf(uint32(len(h.buckets)))
@@ -59,10 +63,6 @@ func (h *HashMap) Get(key Key) Value {
 	selectedBucket := hashkey & lobMask
 	b := h.buckets[selectedBucket]
 	maskedHash := hashkey >> lobSize
-
-	// fmt.Printf(
-	// 	"hashkey: 0x%08x, lobSize: %d, lobMask: 0x%d, selectedBucket: 0x%08x, maskedHash: 0x%08x\n",
-	// 	hashkey, lobSize, lobMask, selectedBucket, maskedHash)
 
 	for b != nil {
 		for index := byte(0); index < b.entryCount; index++ {

@@ -10,6 +10,10 @@ The hashmap is a key-value pair collection based on Go's native map implementati
 
 #### Methods
 
+`Get(key Key) Value`
+
+The get method searches the collection for a key-value pair with the matching key, and returns the value.  In the case where there is no matching key, or the pointer receiver is nil, then `nil` is returned.
+
 `Insert(key Key, value Value) (*HashMap, error)`
 
 The insert method create a copy of the provided hashmap collection with the provided key-value pair added.
@@ -26,6 +30,6 @@ Collections have some common functions for operations across the entire collecti
 
 `Reduce`
 
-`Size()`
+`Size() uint32`
 
 This size method returns the number of key-value pairs in a collection.
