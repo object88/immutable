@@ -66,7 +66,7 @@ func (h *HashMap) Get(key Key) Value {
 
 	for b != nil {
 		for index := byte(0); index < b.entryCount; index++ {
-			if b.hobs.Read(uint32(index)) == maskedHash && b.entries[index].key == key {
+			if uint32(b.hobs.Read(uint64(index))) == maskedHash && b.entries[index].key == key {
 				return b.entries[index].value
 			}
 		}
@@ -243,7 +243,7 @@ func (h *HashMap) internalSet(key Key, value Value) {
 		b = b.overflow
 	}
 	b.entries[b.entryCount] = entry{key, value}
-	b.hobs.Assign(uint32(b.entryCount), hashkey>>h.lobSize)
+	b.hobs.Assign(uint64(b.entryCount), uint64(hashkey>>h.lobSize))
 	b.entryCount++
 }
 
