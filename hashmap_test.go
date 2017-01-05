@@ -204,7 +204,7 @@ func Test_Hashmap_Remove_WithContents(t *testing.T) {
 		t.Fatal("Nil returned from remove")
 	}
 	size := modified.Size()
-	if size != uint32(len(contents)-1) {
+	if size != len(contents)-1 {
 		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents)-1, size)
 	}
 	result1 := modified.Get(key1)
@@ -253,7 +253,7 @@ func Test_Hashmap_Remove_Miss(t *testing.T) {
 		t.Fatal("Nil returned from remove")
 	}
 	size := modified.Size()
-	if size != uint32(len(contents)) {
+	if size != len(contents) {
 		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents), size)
 	}
 	for k, v := range contents {
