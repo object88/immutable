@@ -118,6 +118,24 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 	b.forEach(predicate)
 }
 
+// Insert returns a new collection with the provided key-value pair added.
+// The pointer reciever may be nil; it will be treated as a instance with
+// no contents.
+func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
+	size := h.Size() + 1
+	result := h.instantiate(size)
+
+	if h != nil {
+		abort := make(chan struct{})
+		for kvp := range h.iterate(abort) {
+			result.internalSet(kvp.key, kvp.value)
+		}
+	}
+
+	result.internalSet(key, value)
+	return result.Base.(*HashMap), nil
+}
+
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
 func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
