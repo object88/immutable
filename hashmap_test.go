@@ -117,6 +117,39 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 	}
 }
 
+func Test_Hashmap_Get_WithUnassigned(t *testing.T) {
+	var original *HashMap
+	result := original.Get(IntKey(2))
+	if result != nil {
+		t.Fatalf("Request from nil hashmap returned %s", result)
+	}
+}
+
+func Test_Hashmap_Get_WithEmpty(t *testing.T) {
+	original := NewHashMap(map[Key]Value{})
+	result := original.Get(IntKey(2))
+	if result != nil {
+		t.Fatalf("Request from empty hashmap returned %s", result)
+	}
+}
+
+func Test_Hashmap_Get_WithContents(t *testing.T) {
+	value := "a"
+	original := NewHashMap(map[Key]Value{IntKey(1): value})
+	result := original.Get(IntKey(1))
+	if result != value {
+		t.Fatalf("Expected %s, got %s", value, result)
+	}
+}
+
+func Test_Hashmap_Get_Miss(t *testing.T) {
+	original := NewHashMap(map[Key]Value{IntKey(1): "a"})
+	result := original.Get(IntKey(2))
+	if result != nil {
+		t.Fatalf("Request for miss key returned %s", result)
+	}
+}
+
 func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 	max := 10000
 	contents := make(map[Key]Value, max)
