@@ -43,6 +43,26 @@ func Test_HashMap_Empty_Size(t *testing.T) {
 	}
 }
 
+func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
+	var original *HashMap
+	value := "a"
+	modified, error := original.Insert(IntKey(10), "a")
+	if nil != error {
+		t.Fatalf("Insert to nil hashmap returned error %s\n", error)
+	}
+	if nil == modified {
+		t.Fatal("Insert to nil hashmap did not create a new hashmap\n")
+	}
+	size := modified.Size()
+	if size != 1 {
+		t.Fatalf("New hashmap has size %d; expected 1", size)
+	}
+	returnedValue := modified.Get(IntKey(10))
+	if returnedValue != value {
+		t.Fatalf("Incorrect value stored in new hashmap; expected %s, got %s\n", value, returnedValue)
+	}
+}
+
 func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 	max := 10000
 	contents := make(map[Key]Value, max)
