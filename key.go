@@ -12,7 +12,7 @@ type IntKey int
 // StringKey is a string-based Key
 type StringKey string
 
-// Hash calculates the 32-bit hash for the given IntKey
+// Hash calculates the 32-bit hash
 func (k IntKey) Hash() uint32 {
 	hasher := fnv.New32a()
 
@@ -25,6 +25,7 @@ func (k IntKey) String() string {
 	return fmt.Sprintf("%d", int(k))
 }
 
+// Hash calculates the 32-bit hash
 func (k StringKey) Hash() uint32 {
 	return 0
 }

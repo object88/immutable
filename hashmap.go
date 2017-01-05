@@ -75,8 +75,7 @@ func (h *HashMap) Get(key Key) Value {
 	return nil
 }
 
-// Iterate is a generator function
-func (h *HashMap) Iterate(abort <-chan struct{}) <-chan keyValuePair {
+func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 	ch := make(chan keyValuePair)
 
 	go func() {
@@ -105,7 +104,7 @@ func (h *HashMap) Filter(predicate FilterPredicate) (*HashMap, error) {
 		return nil, nil
 	}
 
-	b := &BaseStruct{h, h}
+	b := &BaseStruct{h}
 	result, err := b.filter(predicate)
 	if err != nil {
 		return nil, err
@@ -115,7 +114,7 @@ func (h *HashMap) Filter(predicate FilterPredicate) (*HashMap, error) {
 
 // ForEach iterates over each key-value pair in this collection
 func (h *HashMap) ForEach(predicate ForEachPredicate) {
-	b := &BaseStruct{h, h}
+	b := &BaseStruct{h}
 	b.forEach(predicate)
 }
 
@@ -126,7 +125,7 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 		return nil, nil
 	}
 
-	b := &BaseStruct{h, h}
+	b := &BaseStruct{h}
 	result, err := b.mapping(predicate)
 	if err != nil {
 		return nil, err
@@ -140,7 +139,7 @@ func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, e
 		return nil, nil
 	}
 
-	b := &BaseStruct{h, h}
+	b := &BaseStruct{h}
 	return b.reduce(predicate, accumulator)
 }
 
@@ -159,7 +158,7 @@ func (h *HashMap) instantiate(size uint32) *BaseStruct {
 	buckets := make([]*bucket, initialSize)
 
 	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
-	return &BaseStruct{Base: hash, internalFunctions: hash}
+	return &BaseStruct{hash}
 }
 
 func (h *HashMap) instantiateWithContents(size uint32, contents []*keyValuePair) *BaseStruct {
