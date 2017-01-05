@@ -48,7 +48,18 @@ func Test_HashMap_Empty_Create(t *testing.T) {
 func Test_HashMap_Empty_Size(t *testing.T) {
 	original := NewHashMap(map[Key]Value{})
 	size := original.Size()
-	if 0 != size {
+	if size != 0 {
+		t.Fatalf("Expected 0 size, got %d\n", size)
+	}
+}
+
+func Test_Hashmap_Create_WithNilContents(t *testing.T) {
+	original := NewHashMap(nil)
+	if nil == original {
+		t.Fatal("NewHashMap with nil argument returned nil")
+	}
+	size := original.Size()
+	if size != 0 {
 		t.Fatalf("Expected 0 size, got %d\n", size)
 	}
 }

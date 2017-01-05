@@ -34,13 +34,7 @@ const (
 
 // NewHashMap creates a new instance of a HashMap
 func NewHashMap(contents map[Key]Value) *HashMap {
-	initialCount := len(contents)
-	initialSize := memory.NextPowerOfTwo(uint(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.PowerOf(initialSize)
-
-	buckets := make([]*bucket, initialSize)
-
-	hash := &HashMap{initialCount, int(initialSize), buckets, lobSize}
+	hash := createHashMap(len(contents))
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -123,7 +117,7 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	size := h.Size() + 1
-	result := h.instantiate(size)
+	result := h.instantiate(size, nil)
 
 	if h != nil {
 		abort := make(chan struct{})
@@ -169,7 +163,7 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 	}
 
 	if h.count == 0 {
-		return h.instantiate(0).Base.(*HashMap), nil
+		return createHashMap(0), nil
 	}
 
 	if h.Get(key) == nil {
@@ -178,10 +172,10 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 	size := h.Size() - 1
 	if size == 0 {
-		return h.instantiate(0).Base.(*HashMap), nil
+		return createHashMap(0), nil
 	}
 
-	result := h.instantiate(size)
+	result := createHashMap(size)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
 		if kvp.key != key {
@@ -189,7 +183,7 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 		}
 	}
 
-	return result.Base.(*HashMap), nil
+	return result, nil
 }
 
 // Size returns the number of items in this collection
@@ -200,26 +194,16 @@ func (h *HashMap) Size() int {
 	return h.count
 }
 
-func (h *HashMap) instantiate(size int) *BaseStruct {
-	initialCount := size
-	initialSize := memory.NextPowerOfTwo(uint(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.PowerOf(initialSize)
-	buckets := make([]*bucket, initialSize)
-
-	hash := &HashMap{initialCount, int(initialSize), buckets, lobSize}
-	return &BaseStruct{hash}
-}
-
-func (h *HashMap) instantiateWithContents(size int, contents []*keyValuePair) *BaseStruct {
-	newHashMap := h.instantiate(size)
+func (*HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
+	hash := createHashMap(size)
 
 	for _, v := range contents {
 		if v != nil {
-			newHashMap.internalSet(v.key, v.value)
+			hash.internalSet(v.key, v.value)
 		}
 	}
 
-	return newHashMap
+	return &BaseStruct{hash}
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
@@ -245,6 +229,15 @@ func (h *HashMap) internalSet(key Key, value Value) {
 	b.entries[b.entryCount] = entry{key, value}
 	b.hobs.Assign(uint64(b.entryCount), uint64(hashkey>>h.lobSize))
 	b.entryCount++
+}
+
+func createHashMap(size int) *HashMap {
+	initialCount := size
+	initialSize := memory.NextPowerOfTwo(uint(math.Ceil(float64(initialCount) / loadFactor)))
+	lobSize := memory.PowerOf(initialSize)
+	buckets := make([]*bucket, initialSize)
+
+	return &HashMap{initialCount, int(initialSize), buckets, lobSize}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {

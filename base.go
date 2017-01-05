@@ -4,8 +4,7 @@ package immutable
 type Base interface {
 	Get(key Key) Value
 	Size() int
-	instantiate(initialSize int) *BaseStruct
-	instantiateWithContents(initialSize int, contents []*keyValuePair) *BaseStruct
+	instantiate(initialSize int, contents []*keyValuePair) *BaseStruct
 	internalSet(key Key, value Value)
 	iterate(abort <-chan struct{}) <-chan keyValuePair
 }
@@ -33,7 +32,7 @@ func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
 		}
 	}
 
-	mutated := b.instantiateWithContents(resultSetCount, resultSet)
+	mutated := b.instantiate(resultSetCount, resultSet)
 
 	return mutated, nil
 }
@@ -47,7 +46,7 @@ func (b *BaseStruct) forEach(predicate ForEachPredicate) {
 }
 
 func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
-	mutated := b.instantiate(b.Size())
+	mutated := b.instantiate(b.Size(), nil)
 	abort := make(chan struct{})
 	ch := b.iterate(abort)
 	for kvp := range ch {
