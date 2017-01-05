@@ -18,7 +18,7 @@ func Test_Hashmap(t *testing.T) {
 		IntKey(26): "zz",
 	}
 	original := NewHashMap(data)
-	if original.Size() != uint32(len(data)) {
+	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}
 	fmt.Println(original.String())
@@ -112,7 +112,7 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
 	}
 	size := modified.Size()
-	if size != uint32(len(contents)+1) {
+	if size != len(contents)+1 {
 		t.Fatalf("New hashmap has size %d; expected %d", size, len(contents)+1)
 	}
 	for k, v := range contents {

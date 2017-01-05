@@ -20,10 +20,10 @@ type entry struct {
 
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
-	count   uint32
-	size    uint32
+	count   int
+	size    int
 	buckets []*bucket
-	lobSize uint32
+	lobSize uint
 }
 
 const (
@@ -34,13 +34,13 @@ const (
 
 // NewHashMap creates a new instance of a HashMap
 func NewHashMap(contents map[Key]Value) *HashMap {
-	initialCount := uint32(len(contents))
-	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
+	initialCount := len(contents)
+	initialSize := memory.NextPowerOfTwo(uint(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
 
 	buckets := make([]*bucket, initialSize)
 
-	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
+	hash := &HashMap{initialCount, int(initialSize), buckets, lobSize}
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -57,7 +57,7 @@ func (h *HashMap) Get(key Key) Value {
 
 	hashkey := key.Hash()
 
-	lobSize := memory.PowerOf(uint32(len(h.buckets)))
+	lobSize := uint32(memory.PowerOf(uint(len(h.buckets))))
 	lobMask := uint32(^(0xffffffff << lobSize))
 
 	selectedBucket := hashkey & lobMask
@@ -193,24 +193,24 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 }
 
 // Size returns the number of items in this collection
-func (h *HashMap) Size() uint32 {
+func (h *HashMap) Size() int {
 	if h == nil {
 		return 0
 	}
 	return h.count
 }
 
-func (h *HashMap) instantiate(size uint32) *BaseStruct {
+func (h *HashMap) instantiate(size int) *BaseStruct {
 	initialCount := size
-	initialSize := memory.NextPowerOfTwo(uint32(math.Ceil(float64(initialCount) / loadFactor)))
+	initialSize := memory.NextPowerOfTwo(uint(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
 	buckets := make([]*bucket, initialSize)
 
-	hash := &HashMap{initialCount, initialSize, buckets, lobSize}
+	hash := &HashMap{initialCount, int(initialSize), buckets, lobSize}
 	return &BaseStruct{hash}
 }
 
-func (h *HashMap) instantiateWithContents(size uint32, contents []*keyValuePair) *BaseStruct {
+func (h *HashMap) instantiateWithContents(size int, contents []*keyValuePair) *BaseStruct {
 	newHashMap := h.instantiate(size)
 
 	for _, v := range contents {
@@ -223,7 +223,7 @@ func (h *HashMap) instantiateWithContents(size uint32, contents []*keyValuePair)
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	lobSize := memory.PowerOf(h.size)
+	lobSize := uint32(memory.PowerOf(uint(h.size)))
 	hobSize := uint32(32 - lobSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 

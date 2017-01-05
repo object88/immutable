@@ -20,7 +20,7 @@ func Test_NextPowerOfTwo(t *testing.T) {
 	evaluateNextPowerOfTwo(t, 128, 128)
 }
 
-func evaluateNextPowerOfTwo(t *testing.T, value, expected uint32) {
+func evaluateNextPowerOfTwo(t *testing.T, value, expected uint) {
 	result := NextPowerOfTwo(value)
 	if result != expected {
 		t.Fatalf("Testing %d; got %d, expected %d\n", value, result, expected)
@@ -38,7 +38,7 @@ func Test_PowerOf(t *testing.T) {
 	evaluatePowerOf(t, 128, 7)
 }
 
-func evaluatePowerOf(t *testing.T, value, expected uint32) {
+func evaluatePowerOf(t *testing.T, value, expected uint) {
 	result := PowerOf(value)
 	if result != expected {
 		t.Fatalf("Testing %d; got %d, expected %d\n", value, result, expected)

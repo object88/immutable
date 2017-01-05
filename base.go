@@ -3,9 +3,9 @@ package immutable
 // Base describes the low-level set of functions
 type Base interface {
 	Get(key Key) Value
-	Size() uint32
-	instantiate(initialSize uint32) *BaseStruct
-	instantiateWithContents(initialSize uint32, contents []*keyValuePair) *BaseStruct
+	Size() int
+	instantiate(initialSize int) *BaseStruct
+	instantiateWithContents(initialSize int, contents []*keyValuePair) *BaseStruct
 	internalSet(key Key, value Value)
 	iterate(abort <-chan struct{}) <-chan keyValuePair
 }
@@ -18,7 +18,7 @@ type BaseStruct struct {
 // Filter returns a subset of the collection, based on the predicate supplied
 func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
 	resultSet := make([]*keyValuePair, b.Size())
-	resultSetCount := uint32(0)
+	resultSetCount := 0
 	abort := make(chan struct{})
 	ch := b.iterate(abort)
 	for kvp := range ch {

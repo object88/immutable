@@ -25,7 +25,7 @@ func Test_HashMap_CustomKey(t *testing.T) {
 	}
 
 	size := original.Size()
-	if size != uint32(len(data)) {
+	if size != len(data) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
 }
