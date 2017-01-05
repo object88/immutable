@@ -23,7 +23,7 @@ type HashMap struct {
 	count   int
 	size    int
 	buckets []*bucket
-	lobSize uint
+	lobSize uint8
 }
 
 const (
@@ -51,7 +51,7 @@ func (h *HashMap) Get(key Key) Value {
 
 	hashkey := key.Hash()
 
-	lobSize := uint32(memory.PowerOf(uint(len(h.buckets))))
+	lobSize := uint32(memory.PowerOf(len(h.buckets)))
 	lobMask := uint32(^(0xffffffff << lobSize))
 
 	selectedBucket := hashkey & lobMask
@@ -207,7 +207,7 @@ func (*HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	lobSize := uint32(memory.PowerOf(uint(h.size)))
+	lobSize := uint32(memory.PowerOf(h.size))
 	hobSize := uint32(32 - lobSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 
@@ -233,7 +233,7 @@ func (h *HashMap) internalSet(key Key, value Value) {
 
 func createHashMap(size int) *HashMap {
 	initialCount := size
-	initialSize := memory.NextPowerOfTwo(uint(math.Ceil(float64(initialCount) / loadFactor)))
+	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
 	buckets := make([]*bucket, initialSize)
 
