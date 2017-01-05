@@ -1,7 +1,5 @@
 package memory
 
-import "unsafe"
-
 const (
 	// SmallBlock indicates 8 bit (1 byte) blocks
 	SmallBlock BlockSize = 8
@@ -12,7 +10,7 @@ const (
 
 const (
 	// allUint32bits = ^uint32(0)
-	bitsInLargeBlock = uint32(unsafe.Sizeof(uint32(0))) * bitsInSmallBlock
+	bitsInLargeBlock = 32
 	bitsInSmallBlock = 8
 	// bitsInBlock   = uint32(unsafe.Sizeof(uint32(0)) * bitsInSmallBlock)
 )

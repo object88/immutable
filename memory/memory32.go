@@ -9,9 +9,9 @@ type Memories32 struct {
 }
 
 // Assign sets a value to the byte array at the given index
-func (m *Memories32) Assign(index uint32, value uint32) {
-	bitsRemaining := m.bitsPerEntry
-	offset := m.bitsPerEntry * index
+func (m *Memories32) Assign(index uint64, value uint64) {
+	bitsRemaining := uint64(m.bitsPerEntry)
+	offset := bitsRemaining * index
 	byteOffset := offset / bitsInLargeBlock
 	bitOffset := offset % bitsInLargeBlock
 
@@ -22,8 +22,8 @@ func (m *Memories32) Assign(index uint32, value uint32) {
 	if writeBitCount > bitsRemaining {
 		writeBitCount = bitsRemaining
 	}
-	initial := uint32(m.m[byteOffset])
-	mask := fullBlock << writeBitCount
+	initial := uint64(m.m[byteOffset])
+	mask := uint64(fullBlock << writeBitCount)
 	result := (initial & ^(^mask << bitOffset)) | ((value & ^mask) << bitOffset)
 	m.m[byteOffset] = largeBlock(result)
 
@@ -32,8 +32,8 @@ func (m *Memories32) Assign(index uint32, value uint32) {
 	// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 
 	if bitsRemaining > 0 {
-		initial := uint32(m.m[byteOffset+1])
-		mask := fullBlock << bitsRemaining
+		initial := uint64(m.m[byteOffset+1])
+		mask := uint64(fullBlock << bitsRemaining)
 		result := (initial & mask) | ((value & (^mask << writeBitCount)) >> writeBitCount)
 		m.m[byteOffset+1] = largeBlock(result)
 
@@ -42,9 +42,9 @@ func (m *Memories32) Assign(index uint32, value uint32) {
 }
 
 // Reads the value at a particular offset
-func (m *Memories32) Read(index uint32) (result uint32) {
-	bitsRemaining := m.bitsPerEntry
-	offset := m.bitsPerEntry * index
+func (m *Memories32) Read(index uint64) (result uint64) {
+	bitsRemaining := uint64(m.bitsPerEntry)
+	offset := bitsRemaining * index
 	bitOffset := offset % bitsInLargeBlock
 	byteOffset := offset / bitsInLargeBlock
 	// fmt.Printf("\nbitOffset: %d, byteOffset: %d\n", bitOffset, byteOffset)
@@ -54,16 +54,16 @@ func (m *Memories32) Read(index uint32) (result uint32) {
 	if readBitCount > bitsRemaining {
 		readBitCount = bitsRemaining
 	}
-	initial := uint32(m.m[byteOffset])
-	mask := uint32(^(fullBlock << readBitCount)) << bitOffset
-	result = (initial & mask) >> bitOffset
+	initial := uint64(m.m[byteOffset])
+	mask := uint64(^(fullBlock << readBitCount)) << bitOffset
+	result = uint64((initial & mask) >> bitOffset)
 
 	bitsRemaining -= readBitCount
 
 	// fmt.Printf("--> %032b; %d\n", result, bitsRemaining)
 	if bitsRemaining > 0 {
-		initial := uint32(m.m[byteOffset+1])
-		result |= ((initial & ^(fullBlock << bitsRemaining)) << (m.bitsPerEntry - bitsRemaining))
+		initial := uint64(m.m[byteOffset+1])
+		result |= ((initial & uint64(^(fullBlock << bitsRemaining))) << (uint64(m.bitsPerEntry) - bitsRemaining))
 		// fmt.Printf("--> %032b\n", result)
 	}
 
