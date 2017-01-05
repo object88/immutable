@@ -217,6 +217,26 @@ func Test_Hashmap_Remove_WithContents(t *testing.T) {
 	}
 }
 
+func Test_Hashmap_Remove_WithContents_ToEmpty(t *testing.T) {
+	key1 := IntKey(0)
+	value1 := "a"
+	contents := map[Key]Value{
+		key1: value1,
+	}
+	original := NewHashMap(contents)
+	modified, error := original.Remove(key1)
+	if error != nil {
+		t.Fatalf("Error returned from remove: %s", error)
+	}
+	if modified == nil {
+		t.Fatal("Nil returned from remove")
+	}
+	size := modified.Size()
+	if size != 0 {
+		t.Fatalf("Incorrect number of entries in returned collection; expected 0, got %d\n", size)
+	}
+}
+
 func Test_Hashmap_Remove_Miss(t *testing.T) {
 	key1, key2, key3 := IntKey(0), IntKey(1), IntKey(2)
 	value1, value2 := "a", "b"

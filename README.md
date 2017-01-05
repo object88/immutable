@@ -16,7 +16,11 @@ The get method searches the collection for a key-value pair with the matching ke
 
 `Insert(key Key, value Value) (*HashMap, error)`
 
-The insert method create a copy of the provided hashmap collection with the provided key-value pair added.
+The insert method creates a copy of the provided hashmap collection with the provided key-value pair added.
+
+`Remove(key Key) (*HashMap, error)`
+
+The remove method creates a copy of the provided hashmap collection, with the entry at the specified key removed.  If the method would result in no change, the same reference is returned. 
 
 ### Common functions
 
