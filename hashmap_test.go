@@ -45,8 +45,9 @@ func Test_HashMap_Empty_Size(t *testing.T) {
 
 func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
 	var original *HashMap
-	value := "a"
-	modified, error := original.Insert(IntKey(10), "a")
+	key := IntKey(4)
+	value := "d"
+	modified, error := original.Insert(key, value)
 	if nil != error {
 		t.Fatalf("Insert to nil hashmap returned error %s\n", error)
 	}
@@ -57,9 +58,62 @@ func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
 	if size != 1 {
 		t.Fatalf("New hashmap has size %d; expected 1", size)
 	}
-	returnedValue := modified.Get(IntKey(10))
+	returnedValue := modified.Get(key)
 	if returnedValue != value {
 		t.Fatalf("Incorrect value stored in new hashmap; expected %s, got %s\n", value, returnedValue)
+	}
+}
+
+func Test_Hashmap_Insert_WithEmpty(t *testing.T) {
+	original := NewHashMap(map[Key]Value{})
+	key := IntKey(4)
+	value := "d"
+	modified, error := original.Insert(key, value)
+	if nil != error {
+		t.Fatalf("Insert to empty hashmap returned error %s\n", error)
+	}
+	if nil == modified {
+		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
+	}
+	size := modified.Size()
+	if size != 1 {
+		t.Fatalf("New hashmap has size %d; expected 1", size)
+	}
+	returnedValue := modified.Get(key)
+	if returnedValue != value {
+		t.Fatalf("Incorrect value stored in new hashmap; expected %s, got %s\n", value, returnedValue)
+	}
+}
+
+func Test_Hashmap_Insert_WithContents(t *testing.T) {
+	contents := map[Key]Value{
+		IntKey(0): "a",
+		IntKey(1): "b",
+		IntKey(2): "c",
+	}
+	original := NewHashMap(contents)
+	key := IntKey(4)
+	value := "d"
+	modified, error := original.Insert(key, value)
+	if nil != error {
+		t.Fatalf("Insert to empty hashmap returned error %s\n", error)
+	}
+	if nil == modified {
+		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
+	}
+	size := modified.Size()
+	if size != uint32(len(contents)+1) {
+		t.Fatalf("New hashmap has size %d; expected %d", size, len(contents)+1)
+	}
+	for k, v := range contents {
+		result := modified.Get(k)
+		if result != v {
+			t.Fatalf("At %s, incorrect value; expected %s, got %s\n", k, v, result)
+		}
+	}
+	result := modified.Get(key)
+	if result != value {
+		t.Fatalf("At %s, incorrect value; expected %s, got %s\n", key, value, result)
 	}
 }
 
