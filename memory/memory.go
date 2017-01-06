@@ -18,9 +18,9 @@ func AllocateMemories(blockSize BlockSize, bits uint32, count uint32) Memories {
 	case LargeBlock:
 		b := make([]largeBlock, requiredBlocks)
 		m = &Memories32{bits, b}
-	case NoPadding:
+	case NoPacking:
 		b := make([]extraLargeBlock, count)
-		m = &MemoriesNoPadding{b}
+		m = &MemoriesNoPacking{b}
 	}
 	return m
 }
@@ -32,8 +32,8 @@ func calculateBlocksRequired(totalBits uint32, blockSize BlockSize) uint32 {
 		size = bitsInSmallBlock
 	case LargeBlock:
 		size = bitsInLargeBlock
-	case NoPadding:
-		size = bitsInNoPadding
+	case NoPacking:
+		size = bitsInExtraLargeBlock
 	}
 	requiredBlocks := totalBits / size
 	if totalBits%size != 0 {

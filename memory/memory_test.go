@@ -9,10 +9,10 @@ func Test_Large_AllocateMemories(t *testing.T) {
 	evaluateLargeAllocate(t, 25, 2, 2)
 }
 
-func Test_NoPadding_AllocateMemories(t *testing.T) {
-	evaluateNoPaddingAllocate(t, 1, 1)
-	evaluateNoPaddingAllocate(t, 2, 2)
-	evaluateNoPaddingAllocate(t, 4, 4)
+func Test_NoPacking_AllocateMemories(t *testing.T) {
+	evaluateNoPackingAllocate(t, 1, 1)
+	evaluateNoPackingAllocate(t, 2, 2)
+	evaluateNoPackingAllocate(t, 4, 4)
 }
 
 func evaluateLargeAllocate(t *testing.T, bits, count uint32, expected int) {
@@ -21,9 +21,9 @@ func evaluateLargeAllocate(t *testing.T, bits, count uint32, expected int) {
 	evaluate(t, len(mem), expected)
 }
 
-func evaluateNoPaddingAllocate(t *testing.T, count uint32, expected int) {
-	m := AllocateMemories(NoPadding, 0, count)
-	mem := m.(*MemoriesNoPadding).m
+func evaluateNoPackingAllocate(t *testing.T, count uint32, expected int) {
+	m := AllocateMemories(NoPacking, 0, count)
+	mem := m.(*MemoriesNoPacking).m
 	evaluate(t, len(mem), expected)
 }
 

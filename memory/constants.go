@@ -1,20 +1,21 @@
 package memory
 
 const (
-	// SmallBlock indicates 8 bit (1 byte) blocks
+	// SmallBlock packs values into 8 bit (1 byte) blocks
 	SmallBlock BlockSize = iota
 
-	// LargeBlock indicates 32 bit (4 byte) blocks
+	// LargeBlock packs values into 32 bit (4 byte) blocks
 	LargeBlock
 
-	// NoPadding indicates 64 bit (8 byte) blocks, with no padding
-	NoPadding
+	// NoPacking stores values directingly into 64 bit (8 byte) blocks, with no
+	// packing
+	NoPacking
 )
 
 const (
 	// allUint32bits = ^uint32(0)
-	bitsInLargeBlock = 32
-	bitsInNoPadding  = 64
-	bitsInSmallBlock = 8
+	bitsInExtraLargeBlock = 64
+	bitsInLargeBlock      = 32
+	bitsInSmallBlock      = 8
 	// bitsInBlock   = uint32(unsafe.Sizeof(uint32(0)) * bitsInSmallBlock)
 )
