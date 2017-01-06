@@ -19,7 +19,7 @@ func (k MyKey) String() string {
 
 func Test_HashMap_CustomKey(t *testing.T) {
 	data := map[Key]Value{MyKey{1}: "a", MyKey{2}: "b"}
-	original := NewHashMap(data)
+	original := NewHashMap(data, nil)
 	if original == nil {
 		t.Fatal("NewHashMap returned nil\n")
 	}

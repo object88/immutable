@@ -3,6 +3,8 @@ package immutable
 import (
 	"fmt"
 	"testing"
+
+	"github.com/object88/immutable/memory"
 )
 
 func Test_Hashmap(t *testing.T) {
@@ -17,7 +19,7 @@ func Test_Hashmap(t *testing.T) {
 		IntKey(8):  "hh",
 		IntKey(26): "zz",
 	}
-	original := NewHashMap(data)
+	original := NewHashMap(data, nil)
 	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}
@@ -39,22 +41,36 @@ func Test_HashMap_Nil_Size(t *testing.T) {
 }
 
 func Test_HashMap_Empty_Create(t *testing.T) {
-	original := NewHashMap(map[Key]Value{})
+	original := NewHashMap(map[Key]Value{}, nil)
 	if original == nil {
 		t.Fatalf("Creating HashMap with empty map returned nil\n")
 	}
 }
 
 func Test_HashMap_Empty_Size(t *testing.T) {
-	original := NewHashMap(map[Key]Value{})
+	original := NewHashMap(map[Key]Value{}, nil)
 	size := original.Size()
 	if size != 0 {
 		t.Fatalf("Expected 0 size, got %d\n", size)
 	}
 }
 
+func Test_Hashmap_ChangeOptions(t *testing.T) {
+	options := NewHashMapOptions()
+	options.BucketStrategy = memory.SmallBlock
+	original := NewHashMap(map[Key]Value{}, options)
+	if original.options.BucketStrategy != memory.SmallBlock {
+		t.Fatalf("Passed in options were not honored for BucketStrategy; expected %s, got %s\n", memory.SmallBlock, original.options.BucketStrategy)
+	}
+
+	options.BucketStrategy = memory.LargeBlock
+	if original.options.BucketStrategy != memory.SmallBlock {
+		t.Fatalf("Changing bucket strategy on options altered hashmap; expected %s, got %s\n", memory.SmallBlock, original.options.BucketStrategy)
+	}
+}
+
 func Test_Hashmap_Create_WithNilContents(t *testing.T) {
-	original := NewHashMap(nil)
+	original := NewHashMap(nil, nil)
 	if nil == original {
 		t.Fatal("NewHashMap with nil argument returned nil")
 	}
@@ -86,7 +102,7 @@ func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Insert_WithEmpty(t *testing.T) {
-	original := NewHashMap(map[Key]Value{})
+	original := NewHashMap(map[Key]Value{}, nil)
 	key := IntKey(4)
 	value := "d"
 	modified, error := original.Insert(key, value)
@@ -112,7 +128,7 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 		IntKey(1): "b",
 		IntKey(2): "c",
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	key := IntKey(4)
 	value := "d"
 	modified, error := original.Insert(key, value)
@@ -147,7 +163,7 @@ func Test_Hashmap_Get_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Get_WithEmpty(t *testing.T) {
-	original := NewHashMap(map[Key]Value{})
+	original := NewHashMap(map[Key]Value{}, nil)
 	result := original.Get(IntKey(2))
 	if result != nil {
 		t.Fatalf("Request from empty hashmap returned %s", result)
@@ -156,7 +172,7 @@ func Test_Hashmap_Get_WithEmpty(t *testing.T) {
 
 func Test_Hashmap_Get_WithContents(t *testing.T) {
 	value := "a"
-	original := NewHashMap(map[Key]Value{IntKey(1): value})
+	original := NewHashMap(map[Key]Value{IntKey(1): value}, nil)
 	result := original.Get(IntKey(1))
 	if result != value {
 		t.Fatalf("Expected %s, got %s", value, result)
@@ -164,7 +180,7 @@ func Test_Hashmap_Get_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Get_Miss(t *testing.T) {
-	original := NewHashMap(map[Key]Value{IntKey(1): "a"})
+	original := NewHashMap(map[Key]Value{IntKey(1): "a"}, nil)
 	result := original.Get(IntKey(2))
 	if result != nil {
 		t.Fatalf("Request for miss key returned %s", result)
@@ -184,7 +200,7 @@ func Test_Hashmap_Remove_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Remove_WithEmpty(t *testing.T) {
-	original := NewHashMap(map[Key]Value{})
+	original := NewHashMap(map[Key]Value{}, nil)
 	key := IntKey(4)
 	modified, error := original.Remove(key)
 	if nil != error {
@@ -206,7 +222,7 @@ func Test_Hashmap_Remove_WithContents(t *testing.T) {
 		key1: value1,
 		key2: value2,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	modified, error := original.Remove(key2)
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
@@ -234,7 +250,7 @@ func Test_Hashmap_Remove_WithContents_ToEmpty(t *testing.T) {
 	contents := map[Key]Value{
 		key1: value1,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	modified, error := original.Remove(key1)
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
@@ -255,7 +271,7 @@ func Test_Hashmap_Remove_Miss(t *testing.T) {
 		key1: value1,
 		key2: value2,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	modified, error := original.Remove(key3)
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
@@ -282,7 +298,7 @@ func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 		contents[IntKey(i)] = i
 	}
 
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	for k, v := range contents {
 		result := original.Get(k)
 		if result != v {

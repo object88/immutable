@@ -25,7 +25,7 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 
 func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 	contents := map[Key]Value{}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	invokeCount := 0
 	modified, err := original.Map(func(k Key, v Value) (Value, error) {
 		invokeCount++
@@ -48,7 +48,7 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	invokeCount := 0
 	modified, err := original.Map(func(k Key, v Value) (Value, error) {
 		invokeCount++
@@ -75,7 +75,7 @@ func Test_Hashmap_Map_WithCancel(t *testing.T) {
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	modified, err := original.Map(func(k Key, v Value) (Value, error) {
 		if k.(IntKey)%2 == 0 {
 			return nil, errors.New("Found an even key")
