@@ -25,7 +25,7 @@ func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 
 func Test_Hashmap_Filter_WithEmpty(t *testing.T) {
 	contents := map[Key]Value{}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	invokeCount := 0
 	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		invokeCount++
@@ -48,7 +48,7 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	invokeCount := 0
 	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		invokeCount++
@@ -76,7 +76,7 @@ func Test_Hashmap_Filter_WithCancel(t *testing.T) {
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
 		if k.(IntKey)%2 == 0 {
 			return false, errors.New("Found an even key")

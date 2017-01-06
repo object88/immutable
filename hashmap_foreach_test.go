@@ -9,7 +9,7 @@ func Test_Hashmap_ForEach(t *testing.T) {
 		IntKey(2): false,
 		IntKey(3): false,
 	}
-	original := NewHashMap(data)
+	original := NewHashMap(data, nil)
 	if original == nil {
 		t.Fatal("Failed to create hashmap")
 	}

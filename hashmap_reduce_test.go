@@ -25,7 +25,7 @@ func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 
 func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
 	contents := map[Key]Value{}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	invokeCount := 0
 	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
 		invokeCount++
@@ -48,7 +48,7 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	invokeCount := 0
 	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
 		invokeCount++
@@ -71,7 +71,7 @@ func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
 		IntKey(2): 2,
 		IntKey(3): 3,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, nil)
 	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
 		if k.(IntKey)%2 == 0 {
 			return nil, errors.New("Found an even key")

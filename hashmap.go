@@ -20,6 +20,7 @@ type entry struct {
 
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
+	options *HashMapOptions
 	count   int
 	size    int
 	buckets []*bucket
@@ -33,8 +34,8 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[Key]Value) *HashMap {
-	hash := createHashMap(len(contents))
+func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
+	hash := createHashMap(len(contents), options)
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -163,7 +164,7 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 	}
 
 	if h.count == 0 {
-		return createHashMap(0), nil
+		return createHashMap(0, h.options), nil
 	}
 
 	if h.Get(key) == nil {
@@ -172,10 +173,10 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 	size := h.Size() - 1
 	if size == 0 {
-		return createHashMap(0), nil
+		return createHashMap(0, h.options), nil
 	}
 
-	result := createHashMap(size)
+	result := createHashMap(size, h.options)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
 		if kvp.key != key {
@@ -194,8 +195,12 @@ func (h *HashMap) Size() int {
 	return h.count
 }
 
-func (*HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
-	hash := createHashMap(size)
+func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
+	var options *HashMapOptions
+	if h != nil {
+		options = h.options
+	}
+	hash := createHashMap(size, options)
 
 	for _, v := range contents {
 		if v != nil {
@@ -231,13 +236,18 @@ func (h *HashMap) internalSet(key Key, value Value) {
 	b.entryCount++
 }
 
-func createHashMap(size int) *HashMap {
+func createHashMap(size int, options *HashMapOptions) *HashMap {
+	// Must clone the options, so that if the user accidently or deliberately
+	// changes some setting after the hashmap has been created, we don't do
+	// something unclever with our memory operations.
+	optionsClone := options.cloneHashMapOptions()
+
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
 	buckets := make([]*bucket, initialSize)
 
-	return &HashMap{initialCount, int(initialSize), buckets, lobSize}
+	return &HashMap{optionsClone, initialCount, int(initialSize), buckets, lobSize}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
