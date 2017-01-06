@@ -2,8 +2,6 @@ package memory
 
 import "testing"
 
-type memoryMap64 map[uint64]uint64
-
 func Test_NoPacking_Read(t *testing.T) {
 	evaluateNoPackingRead(t, 1, 0, 0x0f, memoryMap64{0: 0x0f}, nil)
 	evaluateNoPackingRead(t, 8, 1, 0x0f, memoryMap64{1: 0x0f}, nil)
