@@ -6,3 +6,5 @@ type BlockSize int
 type extraLargeBlock uint64
 type largeBlock uint32
 type smallBlock uint8
+
+type memoryMap64 map[uint64]uint64

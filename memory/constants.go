@@ -7,6 +7,9 @@ const (
 	// LargeBlock packs values into 32 bit (4 byte) blocks
 	LargeBlock
 
+	// ExtraLargeBlock packs values into 64 bit (8 byte) blocks
+	ExtraLargeBlock
+
 	// NoPacking stores values directingly into 64 bit (8 byte) blocks, with no
 	// packing
 	NoPacking
