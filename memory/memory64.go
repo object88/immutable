@@ -1,7 +1,5 @@
 package memory
 
-import "fmt"
-
 const fullExtraLargeBlock = ^uint64(0)
 
 // Memories64 is all your memories.
@@ -49,8 +47,8 @@ func (m *Memories64) Read(index uint64) (result uint64) {
 	offset := bitsRemaining * index
 	bitOffset := offset % bitsInExtraLargeBlock
 	byteOffset := offset / bitsInExtraLargeBlock
-	fmt.Printf("\nbitOffset: %d, byteOffset: %d\n", bitOffset, byteOffset)
-	fmt.Printf("m.m: %x\n", m.m)
+	// fmt.Printf("\nbitOffset: %d, byteOffset: %d\n", bitOffset, byteOffset)
+	// fmt.Printf("m.m: %x\n", m.m)
 
 	readBitCount := bitsInExtraLargeBlock - bitOffset
 	if readBitCount > bitsRemaining {
@@ -62,11 +60,11 @@ func (m *Memories64) Read(index uint64) (result uint64) {
 
 	bitsRemaining -= readBitCount
 
-	fmt.Printf("--> %064b; %d\n", result, bitsRemaining)
+	// fmt.Printf("--> %064b; %d\n", result, bitsRemaining)
 	if bitsRemaining > 0 {
 		initial := uint64(m.m[byteOffset+1])
 		result |= ((initial & uint64(^(fullExtraLargeBlock << bitsRemaining))) << (uint64(m.bitsPerEntry) - bitsRemaining))
-		fmt.Printf("--> %032b\n", result)
+		// fmt.Printf("--> %064b\n", result)
 	}
 
 	return result
