@@ -31,38 +31,24 @@ func init() {
 	}
 }
 
-func compareBucketStrategy(original *HashMap) {
-	var r string
-	for key := range contents {
-		r = original.Get(key).(string)
-	}
-	result = r
-}
-
 func Benchmark_LargeBlock(b *testing.B) {
-	options := NewHashMapOptions()
-	options.BucketStrategy = memory.LargeBlock
-	original := NewHashMap(contents, options)
+	original := createWithStragety(memory.LargeBlock)
 	for i := 0; i < b.N; i++ {
-		compareBucketStrategy(original)
+		testStrategy(original)
 	}
 }
 
 func Benchmark_ExtraLargeBlock(b *testing.B) {
-	options := NewHashMapOptions()
-	options.BucketStrategy = memory.ExtraLargeBlock
-	original := NewHashMap(contents, options)
+	original := createWithStragety(memory.ExtraLargeBlock)
 	for i := 0; i < b.N; i++ {
-		compareBucketStrategy(original)
+		testStrategy(original)
 	}
 }
 
 func Benchmark_NoPackingBlock(b *testing.B) {
-	options := NewHashMapOptions()
-	options.BucketStrategy = memory.NoPacking
-	original := NewHashMap(contents, options)
+	original := createWithStragety(memory.NoPacking)
 	for i := 0; i < b.N; i++ {
-		compareBucketStrategy(original)
+		testStrategy(original)
 	}
 }
 
@@ -74,6 +60,21 @@ func Benchmark_NativeMap(b *testing.B) {
 		}
 		result = r
 	}
+}
+
+func createWithStragety(blocksize memory.BlockSize) *HashMap {
+	options := NewHashMapOptions()
+	options.BucketStrategy = blocksize
+	original := NewHashMap(contents, options)
+	return original
+}
+
+func testStrategy(original *HashMap) {
+	var r string
+	for key := range contents {
+		r = original.Get(key).(string)
+	}
+	result = r
 }
 
 // This code copied directly from StackOverflow; see randStringBytesMaskImprSrc
