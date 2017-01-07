@@ -55,8 +55,8 @@ func Benchmark_NoPackingBlock(b *testing.B) {
 func Benchmark_NativeMap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var r string
-		for _, v := range keys {
-			r = contents[v].(string)
+		for _, key := range keys {
+			r = contents[key].(string)
 		}
 		result = r
 	}
@@ -71,7 +71,7 @@ func createWithStragety(blocksize memory.BlockSize) *HashMap {
 
 func testStrategy(original *HashMap) {
 	var r string
-	for key := range contents {
+	for _, key := range keys {
 		r = original.Get(key).(string)
 	}
 	result = r
