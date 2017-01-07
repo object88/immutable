@@ -5,7 +5,7 @@ const fullBlock = ^uint32(0)
 // Memories32 is all your memories.
 type Memories32 struct {
 	bitsPerEntry uint32
-	m            []largeBlock
+	m            []uint32
 }
 
 // Assign sets a value to the internal memory at the given index
@@ -25,7 +25,7 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 	initial := uint64(m.m[byteOffset])
 	mask := uint64(fullBlock << writeBitCount)
 	result := (initial & ^(^mask << bitOffset)) | ((value & ^mask) << bitOffset)
-	m.m[byteOffset] = largeBlock(result)
+	m.m[byteOffset] = uint32(result)
 
 	// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 
@@ -35,7 +35,7 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 	if bitsRemaining > 32 {
 		o := (uint64(m.bitsPerEntry) - bitsRemaining)
 		result := ((value & (uint64(fullBlock) << o)) >> o)
-		m.m[byteOffset] = largeBlock(result)
+		m.m[byteOffset] = uint32(result)
 		// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 
 		bitsRemaining -= 32
@@ -46,7 +46,7 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 		initial := uint64(m.m[byteOffset])
 		mask := uint64(fullBlock << bitsRemaining)
 		result := (initial & mask) | ((value & (^mask << writeBitCount)) >> writeBitCount)
-		m.m[byteOffset] = largeBlock(result)
+		m.m[byteOffset] = uint32(result)
 
 		// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 	}
