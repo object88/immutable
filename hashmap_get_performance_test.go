@@ -31,10 +31,7 @@ func init() {
 	}
 }
 
-func compareBucketStrategy(blockSize memory.BlockSize) {
-	options := NewHashMapOptions()
-	options.BucketStrategy = blockSize
-	original := NewHashMap(contents, options)
+func compareBucketStrategy(original *HashMap) {
 	var r string
 	for key := range contents {
 		r = original.Get(key).(string)
@@ -43,20 +40,29 @@ func compareBucketStrategy(blockSize memory.BlockSize) {
 }
 
 func Benchmark_LargeBlock(b *testing.B) {
+	options := NewHashMapOptions()
+	options.BucketStrategy = memory.LargeBlock
+	original := NewHashMap(contents, options)
 	for i := 0; i < b.N; i++ {
-		compareBucketStrategy(memory.LargeBlock)
+		compareBucketStrategy(original)
 	}
 }
 
 func Benchmark_ExtraLargeBlock(b *testing.B) {
+	options := NewHashMapOptions()
+	options.BucketStrategy = memory.ExtraLargeBlock
+	original := NewHashMap(contents, options)
 	for i := 0; i < b.N; i++ {
-		compareBucketStrategy(memory.ExtraLargeBlock)
+		compareBucketStrategy(original)
 	}
 }
 
 func Benchmark_NoPackingBlock(b *testing.B) {
+	options := NewHashMapOptions()
+	options.BucketStrategy = memory.NoPacking
+	original := NewHashMap(contents, options)
 	for i := 0; i < b.N; i++ {
-		compareBucketStrategy(memory.NoPacking)
+		compareBucketStrategy(original)
 	}
 }
 
