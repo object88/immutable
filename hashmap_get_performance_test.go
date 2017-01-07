@@ -2,46 +2,34 @@ package immutable
 
 import (
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/object88/immutable/memory"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-	max           = 500000
+	letterBytes     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	letterIndexBits = 6                      // 6 bits to represent a letter index
+	letterIndexMask = 1<<letterIndexBits - 1 // All 1-bits, as many as letterIndexBits
+	letterIndexMax  = 63 / letterIndexBits   // # of letter indices fitting in 63 bits
+	max             = 500000
 )
 
 var keys []IntKey
 var contents map[Key]Value
+var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	shutdown()
-	os.Exit(code)
-}
-
-func setup() {
+func init() {
 	stringLength := 100
 	contents = make(map[Key]Value, max)
 	keys = make([]IntKey, max)
 	for i := 0; i < max; i++ {
 		keys[i] = IntKey(i)
-		contents[keys[i]] = randStringBytesMaskImprSrc(stringLength)
+		contents[keys[i]] = generateString(stringLength)
 	}
 }
-
-func shutdown() {
-}
-
-var result string
 
 func compareBucketStrategy(blockSize memory.BlockSize) {
 	options := NewHashMapOptions()
@@ -55,39 +43,48 @@ func compareBucketStrategy(blockSize memory.BlockSize) {
 }
 
 func Benchmark_LargeBlock(b *testing.B) {
-	compareBucketStrategy(memory.LargeBlock)
+	for i := 0; i < b.N; i++ {
+		compareBucketStrategy(memory.LargeBlock)
+	}
 }
 
 func Benchmark_ExtraLargeBlock(b *testing.B) {
-	compareBucketStrategy(memory.ExtraLargeBlock)
+	for i := 0; i < b.N; i++ {
+		compareBucketStrategy(memory.ExtraLargeBlock)
+	}
 }
 
 func Benchmark_NoPackingBlock(b *testing.B) {
-	compareBucketStrategy(memory.NoPacking)
+	for i := 0; i < b.N; i++ {
+		compareBucketStrategy(memory.NoPacking)
+	}
 }
 
 func Benchmark_NativeMap(b *testing.B) {
-	var r string
-	for _, v := range keys {
-		r = contents[v].(string)
+	for i := 0; i < b.N; i++ {
+		var r string
+		for _, v := range keys {
+			r = contents[v].(string)
+		}
+		result = r
 	}
-	result = r
 }
 
-// This code copied directly from StackOverflow:
+// This code copied directly from StackOverflow; see randStringBytesMaskImprSrc
+// function:
 // http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
-func randStringBytesMaskImprSrc(n int) string {
+func generateString(n int) string {
 	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+	// A src.Int63() generates 63 random bits, enough for letterIndexMax characters!
+	for i, cache, remain := n-1, src.Int63(), letterIndexMax; i >= 0; {
 		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
+			cache, remain = src.Int63(), letterIndexMax
 		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+		if idx := int(cache & letterIndexMask); idx < len(letterBytes) {
 			b[i] = letterBytes[idx]
 			i--
 		}
-		cache >>= letterIdxBits
+		cache >>= letterIndexBits
 		remain--
 	}
 
