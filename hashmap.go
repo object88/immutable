@@ -24,6 +24,7 @@ type HashMap struct {
 	count   int
 	size    int
 	buckets []*bucket
+	lobMask uint32
 	lobSize uint8
 }
 
@@ -52,16 +53,15 @@ func (h *HashMap) Get(key Key) Value {
 
 	hashkey := key.Hash()
 
-	lobSize := uint32(memory.PowerOf(len(h.buckets)))
-	lobMask := uint32(^(0xffffffff << lobSize))
-
-	selectedBucket := hashkey & lobMask
+	selectedBucket := hashkey & h.lobMask
 	b := h.buckets[selectedBucket]
-	maskedHash := hashkey >> lobSize
+	maskedHash := hashkey >> h.lobSize
+
+	totalEntries := uint64(b.entryCount)
 
 	for b != nil {
-		for index := byte(0); index < b.entryCount; index++ {
-			if uint32(b.hobs.Read(uint64(index))) == maskedHash && b.entries[index].key == key {
+		for index := uint64(0); index < totalEntries; index++ {
+			if uint32(b.hobs.Read(index)) == maskedHash && b.entries[index].key == key {
 				return b.entries[index].value
 			}
 		}
@@ -212,12 +212,11 @@ func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	lobSize := uint32(memory.PowerOf(h.size))
-	hobSize := uint32(32 - lobSize)
-	lobMask := uint32(^(0xffffffff << lobSize))
+	// lobSize := h.lobSize // uint32(memory.PowerOf(h.size))
+	hobSize := uint32(32 - h.lobSize)
 
 	hashkey := key.Hash()
-	selectedBucket := hashkey & lobMask
+	selectedBucket := hashkey & h.lobMask
 	// fmt.Printf("At [%s,%s]; h:0x%08x, sb: %d, lob: 0x%08x\n", key, value, hashkey, selectedBucket, hashkey>>h.lobSize)
 	b := h.buckets[selectedBucket]
 	if b == nil {
@@ -245,9 +244,10 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
+	lobMask := uint32(^(0xffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
 
-	return &HashMap{optionsClone, initialCount, int(initialSize), buckets, lobSize}
+	return &HashMap{optionsClone, initialCount, int(initialSize), buckets, lobMask, lobSize}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
