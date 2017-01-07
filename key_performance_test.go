@@ -10,7 +10,7 @@ import (
 var hash32 uint32
 var hash64 uint64
 
-func Benchmark_FNV32(b *testing.B) {
+func Benchmark_Hashing_FNV32(b *testing.B) {
 	var result uint32
 	for i := 0; i < b.N; i++ {
 		hasher := fnv.New32()
@@ -21,7 +21,7 @@ func Benchmark_FNV32(b *testing.B) {
 	hash32 = result
 }
 
-func Benchmark_FNV32a(b *testing.B) {
+func Benchmark_Hashing_FNV32a(b *testing.B) {
 	var result uint32
 	for i := 0; i < b.N; i++ {
 		hasher := fnv.New32a()
@@ -32,7 +32,7 @@ func Benchmark_FNV32a(b *testing.B) {
 	hash32 = result
 }
 
-func Benchmark_FNV64(b *testing.B) {
+func Benchmark_Hashing_FNV64(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		hasher := fnv.New64()
 
@@ -41,7 +41,7 @@ func Benchmark_FNV64(b *testing.B) {
 	}
 }
 
-func Benchmark_FNV64a(b *testing.B) {
+func Benchmark_Hashing_FNV64a(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		hasher := fnv.New64a()
 
@@ -50,7 +50,7 @@ func Benchmark_FNV64a(b *testing.B) {
 	}
 }
 
-func Benchmark_Adler32(b *testing.B) {
+func Benchmark_Hashing_Adler32(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		hasher := adler32.New()
 

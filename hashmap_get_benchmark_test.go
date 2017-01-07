@@ -31,28 +31,28 @@ func init() {
 	}
 }
 
-func Benchmark_LargeBlock(b *testing.B) {
+func Benchmark_Hashmap_Get_LargeBlock(b *testing.B) {
 	original := createWithStragety(memory.LargeBlock)
 	for i := 0; i < b.N; i++ {
 		testStrategy(original)
 	}
 }
 
-func Benchmark_ExtraLargeBlock(b *testing.B) {
+func Benchmark_Hashmap_Get_ExtraLargeBlock(b *testing.B) {
 	original := createWithStragety(memory.ExtraLargeBlock)
 	for i := 0; i < b.N; i++ {
 		testStrategy(original)
 	}
 }
 
-func Benchmark_NoPackingBlock(b *testing.B) {
+func Benchmark_Hashmap_Get_NoPackingBlock(b *testing.B) {
 	original := createWithStragety(memory.NoPacking)
 	for i := 0; i < b.N; i++ {
 		testStrategy(original)
 	}
 }
 
-func Benchmark_NativeMap(b *testing.B) {
+func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var r string
 		for _, key := range keys {
