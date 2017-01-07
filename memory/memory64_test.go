@@ -33,7 +33,7 @@ func evaluateExtraLargeRead(t *testing.T, bitCount, count uint32, readIndex, exp
 	}
 	for k, v := range assignment {
 		// fmt.Printf("Writing 0x%08x to %d\n", v, k)
-		mem[k] = extraLargeBlock(v)
+		mem[k] = uint64(v)
 	}
 	result := m.Read(readIndex)
 	if result != expected {

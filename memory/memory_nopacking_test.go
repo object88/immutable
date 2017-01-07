@@ -28,7 +28,7 @@ func evaluateNoPackingRead(t *testing.T, count uint32, readIndex, expected uint6
 		}
 	}
 	for k, v := range assignment {
-		mem[k] = extraLargeBlock(v)
+		mem[k] = uint64(v)
 	}
 	result := m.Read(readIndex)
 	if result != expected {

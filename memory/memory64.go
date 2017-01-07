@@ -5,7 +5,7 @@ const fullExtraLargeBlock = ^uint64(0)
 // Memories64 is all your memories.
 type Memories64 struct {
 	bitsPerEntry uint32
-	m            []extraLargeBlock
+	m            []uint64
 }
 
 // Assign sets a value to the internal memory at the given index
@@ -22,20 +22,20 @@ func (m *Memories64) Assign(index uint64, value uint64) {
 	if writeBitCount > bitsRemaining {
 		writeBitCount = bitsRemaining
 	}
-	initial := uint64(m.m[byteOffset])
-	mask := uint64(fullExtraLargeBlock << writeBitCount)
+	initial := m.m[byteOffset]
+	mask := fullExtraLargeBlock << writeBitCount
 	result := (initial & ^(^mask << bitOffset)) | ((value & ^mask) << bitOffset)
-	m.m[byteOffset] = extraLargeBlock(result)
+	m.m[byteOffset] = result
 
 	bitsRemaining -= writeBitCount
 
 	// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 
 	if bitsRemaining > 0 {
-		initial := uint64(m.m[byteOffset+1])
-		mask := uint64(fullExtraLargeBlock << bitsRemaining)
+		initial := m.m[byteOffset+1]
+		mask := fullExtraLargeBlock << bitsRemaining
 		result := (initial & mask) | ((value & (^mask << writeBitCount)) >> writeBitCount)
-		m.m[byteOffset+1] = extraLargeBlock(result)
+		m.m[byteOffset+1] = result
 
 		// fmt.Printf("result at %d: %032b\n", byteOffset+1, m.m[byteOffset+1])
 	}
@@ -54,16 +54,16 @@ func (m *Memories64) Read(index uint64) (result uint64) {
 	if readBitCount > bitsRemaining {
 		readBitCount = bitsRemaining
 	}
-	initial := uint64(m.m[byteOffset])
-	mask := uint64(^(fullExtraLargeBlock << readBitCount)) << bitOffset
-	result = uint64((initial & mask) >> bitOffset)
+	initial := m.m[byteOffset]
+	mask := ^(fullExtraLargeBlock << readBitCount) << bitOffset
+	result = (initial & mask) >> bitOffset
 
 	bitsRemaining -= readBitCount
 
 	// fmt.Printf("--> %064b; %d\n", result, bitsRemaining)
 	if bitsRemaining > 0 {
-		initial := uint64(m.m[byteOffset+1])
-		result |= ((initial & uint64(^(fullExtraLargeBlock << bitsRemaining))) << (uint64(m.bitsPerEntry) - bitsRemaining))
+		initial := m.m[byteOffset+1]
+		result |= ((initial & ^(fullExtraLargeBlock << bitsRemaining)) << (uint64(m.bitsPerEntry) - bitsRemaining))
 		// fmt.Printf("--> %064b\n", result)
 	}
 

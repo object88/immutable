@@ -13,16 +13,16 @@ func AllocateMemories(blockSize BlockSize, bits uint32, count uint32) Memories {
 	var m Memories
 	switch blockSize {
 	case SmallBlock:
-		b := make([]smallBlock, requiredBlocks)
+		b := make([]uint8, requiredBlocks)
 		m = &Memories8{bits, b}
 	case LargeBlock:
-		b := make([]largeBlock, requiredBlocks)
+		b := make([]uint32, requiredBlocks)
 		m = &Memories32{bits, b}
 	case ExtraLargeBlock:
-		b := make([]extraLargeBlock, requiredBlocks)
+		b := make([]uint64, requiredBlocks)
 		m = &Memories64{bits, b}
 	case NoPacking:
-		b := make([]extraLargeBlock, count)
+		b := make([]uint64, count)
 		m = &MemoriesNoPacking{b}
 	}
 	return m
