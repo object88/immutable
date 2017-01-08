@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 	"time"
@@ -110,45 +111,71 @@ func evaluateLargeAssign(t *testing.T, bitCount, count uint32, writeIndex, value
 	}
 }
 
-func Test_WriteAndRead2(t *testing.T) {
-	count := 4
-	set := make([]uint64, count)
-	for i := 0; i < count; i++ {
-		set[i] = 0x55555555
+func Test_Large_Random(t *testing.T) {
+	src := rand.NewSource(time.Now().UnixNano())
+	random := rand.New(src)
+
+	width := uint32(64 - 11)
+	max := int64(math.Pow(2.0, float64(width)))
+
+	count := uint64(8)
+	contents := make([]uint64, count)
+	for i := uint64(0); i < count; i++ {
+		contents[i] = uint64(random.Int63n(max))
 	}
 
-	m := AllocateMemories(LargeBlock, 31, 4)
-
-	for k, v := range set {
+	m := AllocateMemories(LargeBlock, width, 8)
+	for k, v := range contents {
 		m.Assign(uint64(k), v)
 	}
 
-	for k, v := range set {
+	for k, v := range contents {
 		result := m.Read(uint64(k))
 		if result != v {
-			t.Fatalf("At %d\nexpected %032b\nreceived %032b\n", k, v, result)
+			t.Fatalf("At %d\nexpected %064b\nreceived %064b\n", k, v, result)
 		}
 	}
 }
 
-func Test_WriteAndRead(t *testing.T) {
-	count := 4
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	set := make([]uint64, count)
-	for i := 0; i < count; i++ {
-		set[i] = uint64(r.Int31()) & 0x7fffffff
-	}
-
-	m := AllocateMemories(LargeBlock, 31, 4)
-
-	for k, v := range set {
-		m.Assign(uint64(k), v)
-	}
-
-	for k, v := range set {
-		result := m.Read(uint64(k))
-		if result != v {
-			t.Fatalf("At %d\nexpected %032b\nreceived %032b\n", k, v, result)
-		}
-	}
-}
+// func Test_WriteAndRead2(t *testing.T) {
+// 	count := 4
+// 	set := make([]uint64, count)
+// 	for i := 0; i < count; i++ {
+// 		set[i] = 0x55555555
+// 	}
+//
+// 	m := AllocateMemories(LargeBlock, 31, 4)
+//
+// 	for k, v := range set {
+// 		m.Assign(uint64(k), v)
+// 	}
+//
+// 	for k, v := range set {
+// 		result := m.Read(uint64(k))
+// 		if result != v {
+// 			t.Fatalf("At %d\nexpected %032b\nreceived %032b\n", k, v, result)
+// 		}
+// 	}
+// }
+//
+// func Test_WriteAndRead(t *testing.T) {
+// 	count := 4
+// 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+// 	set := make([]uint64, count)
+// 	for i := 0; i < count; i++ {
+// 		set[i] = uint64(r.Int31()) & 0x7fffffff
+// 	}
+//
+// 	m := AllocateMemories(LargeBlock, 31, 4)
+//
+// 	for k, v := range set {
+// 		m.Assign(uint64(k), v)
+// 	}
+//
+// 	for k, v := range set {
+// 		result := m.Read(uint64(k))
+// 		if result != v {
+// 			t.Fatalf("At %d\nexpected %032b\nreceived %032b\n", k, v, result)
+// 		}
+// 	}
+// }

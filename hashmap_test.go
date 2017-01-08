@@ -303,8 +303,12 @@ func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 	}
 
 	original := NewHashMap(contents, nil)
-	for k, v := range contents {
+	// fmt.Printf("%#v\n", original)
+	// for k, v := range contents {
+	for i := 0; i < max; i++ {
+		k := IntKey(i)
 		result := original.Get(k)
+		v := contents[k]
 		if result != v {
 			t.Fatalf("At %s; expected %d, got %d\n", k, v, result)
 		}

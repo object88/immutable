@@ -1,5 +1,7 @@
 package memory
 
+import "fmt"
+
 const fullBlock = ^uint32(0)
 
 // Memories32 is all your memories.
@@ -15,8 +17,8 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 	byteOffset := offset / bitsInLargeBlock
 	bitOffset := offset % bitsInLargeBlock
 
-	// fmt.Printf("\nAssigning %032b to index %d\n", value, index)
-	// fmt.Printf("byteOffset: %d, bitOffset: %d, bitsRemaining: %d\n", byteOffset, bitOffset, bitsRemaining)
+	fmt.Printf("\nAssigning %032b to index %d\n", value, index)
+	fmt.Printf("byteOffset: %d, bitOffset: %d, bitsRemaining: %d\n", byteOffset, bitOffset, bitsRemaining)
 
 	writeBitCount := bitsInLargeBlock - bitOffset
 	if writeBitCount > bitsRemaining {
@@ -27,7 +29,7 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 	result := (initial & ^(^mask << bitOffset)) | ((value & ^mask) << bitOffset)
 	m.m[byteOffset] = uint32(result)
 
-	// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
+	fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 
 	bitsRemaining -= writeBitCount
 	byteOffset++
@@ -36,7 +38,7 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 		o := (uint64(m.bitsPerEntry) - bitsRemaining)
 		result := ((value & (uint64(fullBlock) << o)) >> o)
 		m.m[byteOffset] = uint32(result)
-		// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
+		fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 
 		bitsRemaining -= 32
 		byteOffset++
@@ -48,7 +50,7 @@ func (m *Memories32) Assign(index uint64, value uint64) {
 		result := (initial & mask) | ((value & (^mask << writeBitCount)) >> writeBitCount)
 		m.m[byteOffset] = uint32(result)
 
-		// fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
+		fmt.Printf("result at %d: %032b\n", byteOffset, m.m[byteOffset])
 	}
 }
 
@@ -58,8 +60,8 @@ func (m *Memories32) Read(index uint64) (result uint64) {
 	offset := bitsRemaining * index
 	bitOffset := offset % bitsInLargeBlock
 	byteOffset := offset / bitsInLargeBlock
-	// fmt.Printf("\nbitOffset: %d, byteOffset: %d\n", bitOffset, byteOffset)
-	// fmt.Printf("m.m: %x\n", m.m)
+	fmt.Printf("\nbitOffset: %d, byteOffset: %d\n", bitOffset, byteOffset)
+	fmt.Printf("m.m: %x\n", m.m)
 
 	readBitCount := bitsInLargeBlock - bitOffset
 	if readBitCount > bitsRemaining {
@@ -76,7 +78,7 @@ func (m *Memories32) Read(index uint64) (result uint64) {
 		if readBitCount > bitsInLargeBlock {
 			readBitCount = bitsInLargeBlock
 		}
-		// fmt.Printf("--> %064b; %d; %d\n", result, bitsRemaining, readBitCount)
+		fmt.Printf("--> %064b; %d; %d\n", result, bitsRemaining, readBitCount)
 		initial := uint64(m.m[byteOffset+1])
 		result |= ((initial & uint64(^(fullBlock << readBitCount))) << (uint64(m.bitsPerEntry) - bitsRemaining))
 		bitsRemaining -= readBitCount
@@ -84,10 +86,10 @@ func (m *Memories32) Read(index uint64) (result uint64) {
 
 	if bitsRemaining > 0 {
 		initial := uint64(m.m[byteOffset+2])
-		// fmt.Printf("--> %064b; %d\n", result, bitsRemaining)
+		fmt.Printf("--> %064b; %d\n", result, bitsRemaining)
 		result |= ((initial & uint64(^(fullBlock << bitsRemaining))) << (uint64(m.bitsPerEntry) - bitsRemaining))
 	}
-	// fmt.Printf("--> %064b\n", result)
+	fmt.Printf("--> %064b\n", result)
 
 	return result
 }

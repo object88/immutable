@@ -13,7 +13,7 @@ type Key interface {
 	fmt.Stringer
 
 	// Hash calculates the 32-bit hash value for a Key
-	Hash() uint32
+	Hash(seed uint32) uint64
 }
 
 // MapPredicate describes the predicate function used by the Map method

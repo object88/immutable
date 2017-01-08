@@ -22,8 +22,8 @@ func (h *HashMap) GoString() string {
 		buffer.WriteString(fmt.Sprintf("    entryCount: %d\n", b.entryCount))
 		buffer.WriteString("    entries: [\n")
 		for b != nil {
-			for i := uint32(0); i < uint32(b.entryCount); i++ {
-				buffer.WriteString(fmt.Sprintf("      [0x%08x,%s] -> %s\n", b.hobs.Read(uint64(i)), b.entries[i].key, b.entries[i].value))
+			for i := uint64(0); i < uint64(b.entryCount); i++ {
+				buffer.WriteString(fmt.Sprintf("      [0x%016x,%s] -> %s\n", b.hobs.Read(i), b.entries[i].key, b.entries[i].value))
 			}
 
 			b = b.overflow
