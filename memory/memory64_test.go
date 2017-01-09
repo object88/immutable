@@ -1,6 +1,11 @@
 package memory
 
-import "testing"
+import (
+	"math"
+	"math/rand"
+	"testing"
+	"time"
+)
 
 func Test_ExtraLarge_Read(t *testing.T) {
 	evaluateExtraLargeRead(t, 4, 1, 0, 0xf, memoryMap64{0: 0xf}, nil)
@@ -72,6 +77,32 @@ func evaluateExtraLargeAssign(t *testing.T, bitCount, count uint32, writeIndex, 
 		result := uint64(mem[k])
 		if v != result {
 			t.Fatalf("At %d, incorrect result from write; expected 0x%016x, got 0x%016x\n", k, v, result)
+		}
+	}
+}
+
+func Test_ExtraLarge_Random(t *testing.T) {
+	src := rand.NewSource(time.Now().UnixNano())
+	random := rand.New(src)
+
+	width := uint32(64 - 11)
+	max := int64(math.Pow(2.0, float64(width)))
+
+	count := uint64(8)
+	contents := make([]uint64, count)
+	for i := uint64(0); i < count; i++ {
+		contents[i] = uint64(random.Int63n(max))
+	}
+
+	m := AllocateMemories(ExtraLargeBlock, width, 8)
+	for k, v := range contents {
+		m.Assign(uint64(k), v)
+	}
+
+	for k, v := range contents {
+		result := m.Read(uint64(k))
+		if result != v {
+			t.Fatalf("At %d\nexpected %064b\nreceived %064b\n", k, v, result)
 		}
 	}
 }
