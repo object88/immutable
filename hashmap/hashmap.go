@@ -1,10 +1,11 @@
-package immutable
+package hashmap
 
 import (
 	"math"
 	"math/rand"
 	"time"
 
+	"github.com/object88/immutable"
 	"github.com/object88/immutable/memory"
 )
 
@@ -16,8 +17,8 @@ type bucket struct {
 }
 
 type entry struct {
-	key   Key
-	value Value
+	key   immutable.Key
+	value immutable.Value
 }
 
 // HashMap is a read-only key-to-value collection
@@ -37,7 +38,7 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
+func NewHashMap(contents map[immutable.Key]immutable.Value, options *HashMapOptions) *HashMap {
 	// Must clone the options, so that if the user accidently or deliberately
 	// changes some setting after the hashmap has been created, we don't do
 	// something unclever with our memory operations.
@@ -46,14 +47,14 @@ func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
 	hash := createHashMap(len(contents), optionsClone)
 
 	for k, v := range contents {
-		hash.internalSet(k, v)
+		hash.InternalSet(k, v)
 	}
 
 	return hash
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(key Key) Value {
+func (h *HashMap) Get(key immutable.Key) immutable.Value {
 	if h == nil || h.count == 0 {
 		return nil
 	}
@@ -81,8 +82,8 @@ func (h *HashMap) Get(key Key) Value {
 	return nil
 }
 
-func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
-	ch := make(chan keyValuePair)
+func (h *HashMap) Iterate(abort <-chan struct{}) <-chan immutable.KeyValuePair {
+	ch := make(chan immutable.KeyValuePair)
 
 	go func() {
 		defer close(ch)
@@ -91,7 +92,7 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 			for b != nil {
 				for j := byte(0); j < b.entryCount; j++ {
 					select {
-					case ch <- keyValuePair{b.entries[j].key, b.entries[j].value}:
+					case ch <- immutable.KeyValuePair{Key: b.entries[j].key, Value: b.entries[j].value}:
 					case <-abort:
 						return
 					}
@@ -105,32 +106,32 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
-func (h *HashMap) Filter(predicate FilterPredicate) (*HashMap, error) {
+func (h *HashMap) Filter(predicate immutable.FilterPredicate) (*HashMap, error) {
 	if h == nil {
 		return nil, nil
 	}
 
-	b := &BaseStruct{h}
-	result, err := b.filter(predicate)
+	b := &immutable.BaseStruct{Base: h}
+	result, err := b.Filter(predicate)
 	if err != nil {
 		return nil, err
 	}
 	return result.Base.(*HashMap), nil
 }
 
-// ForEach iterates over each key-value pair in this collection
-func (h *HashMap) ForEach(predicate ForEachPredicate) {
-	b := &BaseStruct{h}
-	b.forEach(predicate)
+// ForEach Iterates over each key-value pair in this collection
+func (h *HashMap) ForEach(predicate immutable.ForEachPredicate) {
+	b := &immutable.BaseStruct{Base: h}
+	b.ForEach(predicate)
 }
 
 // Insert returns a new collection with the provided key-value pair added.
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
-func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
+func (h *HashMap) Insert(key immutable.Key, value immutable.Value) (*HashMap, error) {
 	if h == nil {
 		result := createHashMap(1, NewHashMapOptions())
-		result.internalSet(key, value)
+		result.InternalSet(key, value)
 		return result, nil
 	}
 
@@ -145,21 +146,21 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	size := h.Size()
 	if matched {
 		result = createHashMap(size, h.options)
-		for kvp := range h.iterate(abort) {
-			insertValue := kvp.value
-			if kvp.key == key {
+		for kvp := range h.Iterate(abort) {
+			insertValue := kvp.Value
+			if kvp.Key == key {
 				insertValue = value
 			}
-			result.internalSet(kvp.key, insertValue)
+			result.InternalSet(kvp.Key, insertValue)
 		}
 	} else {
 		size++
 		result = createHashMap(size, h.options)
-		for kvp := range h.iterate(abort) {
-			result.internalSet(kvp.key, kvp.value)
+		for kvp := range h.Iterate(abort) {
+			result.InternalSet(kvp.Key, kvp.Value)
 		}
 
-		result.internalSet(key, value)
+		result.InternalSet(key, value)
 	}
 
 	return result, nil
@@ -167,13 +168,13 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
-func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
+func (h *HashMap) Map(predicate immutable.MapPredicate) (*HashMap, error) {
 	if h == nil {
 		return nil, nil
 	}
 
-	b := &BaseStruct{h}
-	result, err := b.mapping(predicate)
+	b := &immutable.BaseStruct{Base: h}
+	result, err := b.Mapping(predicate)
 	if err != nil {
 		return nil, err
 	}
@@ -181,18 +182,18 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
+func (h *HashMap) Reduce(predicate immutable.ReducePredicate, accumulator immutable.Value) (immutable.Value, error) {
 	if h == nil {
 		return nil, nil
 	}
 
-	b := &BaseStruct{h}
-	return b.reduce(predicate, accumulator)
+	b := &immutable.BaseStruct{Base: h}
+	return b.Reduce(predicate, accumulator)
 }
 
 // Remove returns a copy of the provided HashMap with the specified element
 // removed.
-func (h *HashMap) Remove(key Key) (*HashMap, error) {
+func (h *HashMap) Remove(key immutable.Key) (*HashMap, error) {
 	if h == nil {
 		return nil, nil
 	}
@@ -212,9 +213,9 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 	result := createHashMap(size, h.options)
 	abort := make(chan struct{})
-	for kvp := range h.iterate(abort) {
-		if kvp.key != key {
-			result.internalSet(kvp.key, kvp.value)
+	for kvp := range h.Iterate(abort) {
+		if kvp.Key != key {
+			result.InternalSet(kvp.Key, kvp.Value)
 		}
 	}
 
@@ -229,19 +230,19 @@ func (h *HashMap) Size() int {
 	return h.count
 }
 
-func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
+func (h *HashMap) Instantiate(size int, contents []*immutable.KeyValuePair) *immutable.BaseStruct {
 	hash := createHashMap(size, h.options)
 
 	for _, v := range contents {
 		if v != nil {
-			hash.internalSet(v.key, v.value)
+			hash.InternalSet(v.Key, v.Value)
 		}
 	}
 
-	return &BaseStruct{hash}
+	return &immutable.BaseStruct{Base: hash}
 }
 
-func (h *HashMap) internalSet(key Key, value Value) {
+func (h *HashMap) InternalSet(key immutable.Key, value immutable.Value) {
 	hobSize := uint32(64 - h.lobSize)
 
 	hashkey := key.Hash(h.seed)

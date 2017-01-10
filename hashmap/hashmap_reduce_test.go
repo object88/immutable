@@ -1,14 +1,16 @@
-package immutable
+package hashmap
 
 import (
 	"errors"
 	"testing"
+
+	"github.com/object88/immutable"
 )
 
 func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 	var original *HashMap
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
+	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
 		return acc.(int) + v.(int), nil
 	}, 0)
@@ -24,10 +26,10 @@ func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
-	contents := map[Key]Value{}
+	contents := map[immutable.Key]immutable.Value{}
 	original := NewHashMap(contents, nil)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
+	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
 		return acc.(int) + v.(int), nil
 	}, 0)
@@ -43,14 +45,14 @@ func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithContents(t *testing.T) {
-	contents := map[Key]Value{
-		IntKey(1): 1,
-		IntKey(2): 2,
-		IntKey(3): 3,
+	contents := map[immutable.Key]immutable.Value{
+		immutable.IntKey(1): 1,
+		immutable.IntKey(2): 2,
+		immutable.IntKey(3): 3,
 	}
 	original := NewHashMap(contents, nil)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
+	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
 		return acc.(int) + v.(int), nil
 	}, 0)
@@ -66,14 +68,14 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
-	contents := map[Key]Value{
-		IntKey(1): 1,
-		IntKey(2): 2,
-		IntKey(3): 3,
+	contents := map[immutable.Key]immutable.Value{
+		immutable.IntKey(1): 1,
+		immutable.IntKey(2): 2,
+		immutable.IntKey(3): 3,
 	}
 	original := NewHashMap(contents, nil)
-	sum, err := original.Reduce(func(acc Value, k Key, v Value) (Value, error) {
-		if k.(IntKey)%2 == 0 {
+	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+		if k.(immutable.IntKey)%2 == 0 {
 			return nil, errors.New("Found an even key")
 		}
 		return acc.(int) + v.(int), nil

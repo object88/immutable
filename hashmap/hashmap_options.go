@@ -1,4 +1,4 @@
-package immutable
+package hashmap
 
 import "github.com/object88/immutable/memory"
 

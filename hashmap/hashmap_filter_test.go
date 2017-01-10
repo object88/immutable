@@ -1,14 +1,16 @@
-package immutable
+package hashmap
 
 import (
 	"errors"
 	"testing"
+
+	"github.com/object88/immutable"
 )
 
 func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 	var original *HashMap
 	invokeCount := 0
-	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
+	modified, err := original.Filter(func(k immutable.Key, v immutable.Value) (bool, error) {
 		invokeCount++
 		return v.(int)%2 == 0, nil
 	})
@@ -24,10 +26,10 @@ func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Filter_WithEmpty(t *testing.T) {
-	contents := map[Key]Value{}
+	contents := map[immutable.Key]immutable.Value{}
 	original := NewHashMap(contents, nil)
 	invokeCount := 0
-	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
+	modified, err := original.Filter(func(k immutable.Key, v immutable.Value) (bool, error) {
 		invokeCount++
 		return v.(int)%2 == 0, nil
 	})
@@ -43,14 +45,14 @@ func Test_Hashmap_Filter_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Filter_WithContents(t *testing.T) {
-	contents := map[Key]Value{
-		IntKey(1): 1,
-		IntKey(2): 2,
-		IntKey(3): 3,
+	contents := map[immutable.Key]immutable.Value{
+		immutable.IntKey(1): 1,
+		immutable.IntKey(2): 2,
+		immutable.IntKey(3): 3,
 	}
 	original := NewHashMap(contents, nil)
 	invokeCount := 0
-	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
+	modified, err := original.Filter(func(k immutable.Key, v immutable.Value) (bool, error) {
 		invokeCount++
 		return v.(int)%2 == 0, nil
 	})
@@ -61,7 +63,7 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 	if size != 1 {
 		t.Fatalf("Incorrect number of elements in new collection; expected 1, got %d\n", size)
 	}
-	value := modified.Get(IntKey(2))
+	value := modified.Get(immutable.IntKey(2))
 	if value == nil || value.(int) != 2 {
 		t.Fatalf("Incorrect contents of new collection:\n%s\n", modified)
 	}
@@ -71,14 +73,14 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Filter_WithCancel(t *testing.T) {
-	contents := map[Key]Value{
-		IntKey(1): 1,
-		IntKey(2): 2,
-		IntKey(3): 3,
+	contents := map[immutable.Key]immutable.Value{
+		immutable.IntKey(1): 1,
+		immutable.IntKey(2): 2,
+		immutable.IntKey(3): 3,
 	}
 	original := NewHashMap(contents, nil)
-	modified, err := original.Filter(func(k Key, v Value) (bool, error) {
-		if k.(IntKey)%2 == 0 {
+	modified, err := original.Filter(func(k immutable.Key, v immutable.Value) (bool, error) {
+		if k.(immutable.IntKey)%2 == 0 {
 			return false, errors.New("Found an even key")
 		}
 		return v.(int)%2 == 0, nil
