@@ -21,6 +21,8 @@ var contents map[Key]Value
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
+var hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *HashMap
+
 func init() {
 	stringLength := 100
 	contents = make(map[Key]Value, max)
@@ -29,26 +31,26 @@ func init() {
 		keys[i] = IntKey(i)
 		contents[keys[i]] = generateString(stringLength)
 	}
+	hashmapLargeBlock = createWithStragety(memory.LargeBlock)
+	hashmapExtraLargeBlock = createWithStragety(memory.ExtraLargeBlock)
+	hashmapNoPacked = createWithStragety(memory.NoPacking)
 }
 
 func Benchmark_Hashmap_Get_LargeBlock(b *testing.B) {
-	original := createWithStragety(memory.LargeBlock)
 	for i := 0; i < b.N; i++ {
-		testStrategy(original)
+		testStrategy(hashmapLargeBlock)
 	}
 }
 
 func Benchmark_Hashmap_Get_ExtraLargeBlock(b *testing.B) {
-	original := createWithStragety(memory.ExtraLargeBlock)
 	for i := 0; i < b.N; i++ {
-		testStrategy(original)
+		testStrategy(hashmapExtraLargeBlock)
 	}
 }
 
-func Benchmark_Hashmap_Get_NoPackingBlock(b *testing.B) {
-	original := createWithStragety(memory.NoPacking)
+func Benchmark_Hashmap_Get_NoPacking(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		testStrategy(original)
+		testStrategy(hashmapNoPacked)
 	}
 }
 
