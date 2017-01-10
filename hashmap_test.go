@@ -154,6 +154,38 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 	}
 }
 
+func Test_Hashmap_Insert_WithSameKey(t *testing.T) {
+	contents := map[Key]Value{IntKey(1): "a", IntKey(2): "b"}
+	original := NewHashMap(contents, nil)
+	modified, err := original.Insert(IntKey(1), "aa")
+	if err != nil {
+		t.Fatalf("Received error during insert: %s\n", err)
+	}
+	if modified == nil {
+		t.Fatalf("Received nil from insert\n")
+	}
+	count := modified.Size()
+	if count != len(contents) {
+		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", count, len(contents))
+	}
+	result := modified.Get(IntKey(1))
+	if result != "aa" {
+		t.Fatalf("Modified hash map has wrong value for key; got %d, expected 'aa'\n", result)
+	}
+}
+
+func Test_Hashmap_Insert_WithSameKeyAndSameValue(t *testing.T) {
+	contents := map[Key]Value{IntKey(1): "a"}
+	original := NewHashMap(contents, nil)
+	modified, err := original.Insert(IntKey(1), "a")
+	if err != nil {
+		t.Fatalf("Received error during insert: %s\n", err)
+	}
+	if original != modified {
+		t.Fatalf("Hash map returned from insert is not same hash map\n")
+	}
+}
+
 func Test_Hashmap_Get_WithUnassigned(t *testing.T) {
 	var original *HashMap
 	result := original.Get(IntKey(2))
@@ -265,29 +297,17 @@ func Test_Hashmap_Remove_WithContents_ToEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Remove_Miss(t *testing.T) {
-	key1, key2, key3 := IntKey(0), IntKey(1), IntKey(2)
-	value1, value2 := "a", "b"
 	contents := map[Key]Value{
-		key1: value1,
-		key2: value2,
+		IntKey(0): "a",
+		IntKey(1): "b",
 	}
 	original := NewHashMap(contents, nil)
-	modified, error := original.Remove(key3)
+	modified, error := original.Remove(IntKey(2))
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
 	}
-	if modified == nil {
-		t.Fatal("Nil returned from remove")
-	}
-	size := modified.Size()
-	if size != len(contents) {
-		t.Fatalf("Incorrect number of entries in returned collection; expected %d, got %d\n", len(contents), size)
-	}
-	for k, v := range contents {
-		result := modified.Get(k)
-		if result != v {
-			t.Fatalf("Value returned from key %s is incorrect; expected %s, got %s\n", k, v, result)
-		}
+	if modified != original {
+		t.Fatalf("Return from remove did not return the same instance")
 	}
 }
 
