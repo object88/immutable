@@ -11,47 +11,59 @@ import (
 type memoryMap32 map[uint32]uint32
 
 func Test_Large_Read(t *testing.T) {
-	evaluateLargeRead(t, 4, 1, 0, 0x000000000000000f, memoryMap32{0: 0x0000000f}, nil)
-	evaluateLargeRead(t, 4, 8, 1, 0x000000000000000f, memoryMap32{0: 0x000000f0}, nil)
-	evaluateLargeRead(t, 4, 16, 8, 0x000000000000000f, memoryMap32{1: 0x0000000f}, nil)
-	evaluateLargeRead(t, 4, 16, 9, 0x000000000000000f, memoryMap32{1: 0x000000f0}, nil)
-	evaluateLargeRead(t, 6, 2, 1, 0x000000000000003f, memoryMap32{0: 0x00000fc0}, nil)
-	evaluateLargeRead(t, 11, 2, 1, 0x00000000000007ff, memoryMap32{0: 0x003ff800}, nil)
-	evaluateLargeRead(t, 24, 2, 1, 0x0000000000ffffff, memoryMap32{0: 0xff000000, 1: 0x0000ffff}, nil)
-	evaluateLargeRead(t, 31, 4, 1, 0x000000007fffffff, memoryMap32{0: 0x80000000, 1: 0x3fffffff}, nil)
-	evaluateLargeRead(t, 31, 4, 1, 0x000000002aaaaaaa, memoryMap32{1: 0x15555555}, nil)
-	evaluateLargeRead(t, 31, 4, 1, 0x0000000055555555, memoryMap32{0: 0x80000000, 1: 0x2aaaaaaa}, nil)
-	evaluateLargeRead(t, 32, 4, 1, 0x00000000ffffffff, memoryMap32{1: 0xffffffff}, nil)
-	evaluateLargeRead(t, 32, 4, 1, 0x00000000aaaaaaaa, memoryMap32{1: 0xaaaaaaaa}, nil)
-	evaluateLargeRead(t, 32, 4, 1, 0x0000000055555555, memoryMap32{1: 0x55555555}, nil)
-	evaluateLargeRead(t, 63, 4, 1, 0x2aaaaaaaaaaaaaaa, memoryMap32{2: 0x55555555, 3: 0x55555555}, nil)
-	evaluateLargeRead(t, 63, 4, 1, 0x5555555555555555, memoryMap32{1: 0x80000000, 2: 0xaaaaaaaa, 3: 0xaaaaaaaa}, nil)
-	evaluateLargeRead(t, 63, 4, 1, 0x7fffffffffffffff, memoryMap32{1: 0xc0000000, 2: 0xffffffff, 3: 0x3fffffff}, nil)
-	evaluateLargeRead(t, 64, 4, 1, 0xaaaaaaaaaaaaaaaa, memoryMap32{2: 0xaaaaaaaa, 3: 0xaaaaaaaa}, nil)
-	evaluateLargeRead(t, 64, 4, 1, 0x5555555555555555, memoryMap32{2: 0x55555555, 3: 0x55555555}, nil)
-	evaluateLargeRead(t, 64, 4, 1, 0xffffffffffffffff, memoryMap32{2: 0xffffffff, 3: 0xffffffff}, nil)
-
 	o := &readOptions{true}
-	evaluateLargeRead(t, 4, 1, 0, 0x0, memoryMap32{0: 0xfffffff0}, o)
-	evaluateLargeRead(t, 4, 8, 1, 0x0, memoryMap32{0: 0xffffff0f}, o)
-}
 
-func evaluateLargeRead(t *testing.T, bitCount, count uint32, readIndex, expected uint64, assignment memoryMap32, options *readOptions) {
-	// fmt.Printf("\nReviewing %d/%d/0x%08x\n", bitCount, count, expected)
-	m := AllocateMemories(LargeBlock, bitCount, count)
-	mem := m.(*Memories32).m
-	if options != nil && options.initInvert {
-		for k := range mem {
-			mem[k] = 0xffffffff
-		}
+	testCases := []struct {
+		bitCount   uint32
+		count      uint32
+		readIndex  uint64
+		expected   uint64
+		assignment memoryMap32
+		options    *readOptions
+	}{
+		{4, 1, 0, 0x000000000000000f, memoryMap32{0: 0x0000000f}, nil},
+		{4, 8, 1, 0x000000000000000f, memoryMap32{0: 0x000000f0}, nil},
+		{4, 16, 8, 0x000000000000000f, memoryMap32{1: 0x0000000f}, nil},
+		{4, 16, 9, 0x000000000000000f, memoryMap32{1: 0x000000f0}, nil},
+		{6, 2, 1, 0x000000000000003f, memoryMap32{0: 0x00000fc0}, nil},
+		{11, 2, 1, 0x00000000000007ff, memoryMap32{0: 0x003ff800}, nil},
+		{24, 2, 1, 0x0000000000ffffff, memoryMap32{0: 0xff000000, 1: 0x0000ffff}, nil},
+		{31, 4, 1, 0x000000007fffffff, memoryMap32{0: 0x80000000, 1: 0x3fffffff}, nil},
+		{31, 4, 1, 0x000000002aaaaaaa, memoryMap32{1: 0x15555555}, nil},
+		{31, 4, 1, 0x0000000055555555, memoryMap32{0: 0x80000000, 1: 0x2aaaaaaa}, nil},
+		{32, 4, 1, 0x00000000ffffffff, memoryMap32{1: 0xffffffff}, nil},
+		{32, 4, 1, 0x00000000aaaaaaaa, memoryMap32{1: 0xaaaaaaaa}, nil},
+		{32, 4, 1, 0x0000000055555555, memoryMap32{1: 0x55555555}, nil},
+		{63, 4, 1, 0x2aaaaaaaaaaaaaaa, memoryMap32{2: 0x55555555, 3: 0x55555555}, nil},
+		{63, 4, 1, 0x5555555555555555, memoryMap32{1: 0x80000000, 2: 0xaaaaaaaa, 3: 0xaaaaaaaa}, nil},
+		{63, 4, 1, 0x7fffffffffffffff, memoryMap32{1: 0xc0000000, 2: 0xffffffff, 3: 0x3fffffff}, nil},
+		{64, 4, 1, 0xaaaaaaaaaaaaaaaa, memoryMap32{2: 0xaaaaaaaa, 3: 0xaaaaaaaa}, nil},
+		{64, 4, 1, 0x5555555555555555, memoryMap32{2: 0x55555555, 3: 0x55555555}, nil},
+		{64, 4, 1, 0xffffffffffffffff, memoryMap32{2: 0xffffffff, 3: 0xffffffff}, nil},
+
+		{4, 1, 0, 0x0, memoryMap32{0: 0xfffffff0}, o},
+		{4, 8, 1, 0x0, memoryMap32{0: 0xffffff0f}, o},
 	}
-	for k, v := range assignment {
-		// fmt.Printf("Writing 0x%08x to %d\n", v, k)
-		mem[k] = uint32(v)
-	}
-	result := m.Read(readIndex)
-	if result != expected {
-		t.Fatalf("Incorrect result from read; expected 0x%016x, got 0x%016x\n", expected, result)
+
+	for index, tc := range testCases {
+		t.Run(fmt.Sprintf("%d", index), func(t *testing.T) {
+			// fmt.Printf("\nReviewing %d/%d/0x%08x\n", bitCount, count, expected)
+			m := AllocateMemories(LargeBlock, tc.bitCount, tc.count)
+			mem := m.(*Memories32).m
+			if tc.options != nil && tc.options.initInvert {
+				for k := range mem {
+					mem[k] = 0xffffffff
+				}
+			}
+			for k, v := range tc.assignment {
+				// fmt.Printf("Writing 0x%08x to %d\n", v, k)
+				mem[k] = uint32(v)
+			}
+			result := m.Read(tc.readIndex)
+			if result != tc.expected {
+				t.Fatalf("Incorrect result from read; expected 0x%016x, got 0x%016x\n", tc.expected, result)
+			}
+		})
 	}
 }
 
@@ -123,23 +135,6 @@ func Test_Large_Assign(t *testing.T) {
 		})
 	}
 }
-
-// func evaluateLargeAssign(t *testing.T, bitCount, count uint32, writeIndex, value uint64, assessment memoryMap32, options *assignOptions) {
-// 	m := AllocateMemories(LargeBlock, bitCount, count)
-// 	mem := m.(*Memories32).m
-// 	if options != nil && options.initInvert {
-// 		for k := range mem {
-// 			mem[k] = 0xffffffff
-// 		}
-// 	}
-// 	m.Assign(writeIndex, value)
-// 	for k, v := range assessment {
-// 		result := uint32(mem[k])
-// 		if v != result {
-// 			t.Fatalf("At %d, incorrect result from write; expected 0x%016x, got 0x%016x\n", k, v, result)
-// 		}
-// 	}
-// }
 
 func Test_Large_Random(t *testing.T) {
 	src := rand.NewSource(time.Now().UnixNano())
