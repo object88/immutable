@@ -117,18 +117,39 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
-	size := h.Size() + 1
-	result := h.instantiate(size, nil)
+	foundValue := h.Get(key)
+	matched := foundValue != nil
+	if matched && foundValue == value {
+		return h, nil
+	}
+
+	size := h.Size()
+	if !matched {
+		size++
+	}
+	result := createHashMap(size, nil)
 
 	if h != nil {
 		abort := make(chan struct{})
-		for kvp := range h.iterate(abort) {
-			result.internalSet(kvp.key, kvp.value)
+		if matched {
+			for kvp := range h.iterate(abort) {
+				insertValue := kvp.value
+				if kvp.key == key {
+					insertValue = value
+				}
+				result.internalSet(kvp.key, insertValue)
+			}
+		} else {
+			for kvp := range h.iterate(abort) {
+				result.internalSet(kvp.key, kvp.value)
+			}
 		}
 	}
 
-	result.internalSet(key, value)
-	return result.Base.(*HashMap), nil
+	if !matched {
+		result.internalSet(key, value)
+	}
+	return result, nil
 }
 
 // Map iterates over the contents of a collection and calls the supplied predicate.
