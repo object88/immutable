@@ -141,11 +141,10 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	}
 
 	var result *HashMap
+	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
 		result = createHashMap(size, h.options)
-
-		abort := make(chan struct{})
 		for kvp := range h.iterate(abort) {
 			insertValue := kvp.value
 			if kvp.key == key {
@@ -156,7 +155,6 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	} else {
 		size++
 		result = createHashMap(size, h.options)
-		abort := make(chan struct{})
 		for kvp := range h.iterate(abort) {
 			result.internalSet(kvp.key, kvp.value)
 		}
@@ -232,13 +230,7 @@ func (h *HashMap) Size() int {
 }
 
 func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
-	var options *HashMapOptions
-	if h != nil {
-		options = h.options
-	} else {
-		options = NewHashMapOptions()
-	}
-	hash := createHashMap(size, options)
+	hash := createHashMap(size, h.options)
 
 	for _, v := range contents {
 		if v != nil {
