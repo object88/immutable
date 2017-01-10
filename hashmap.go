@@ -32,8 +32,7 @@ type HashMap struct {
 }
 
 const (
-	// lobSize        = 3
-	bucketCapacity = 1 << 3 //lobSize
+	bucketCapacity = 1 << 3
 	loadFactor     = 6.0
 )
 
@@ -71,13 +70,6 @@ func (h *HashMap) Get(key Key) Value {
 	// fmt.Printf("hashKey: 0x%016x / selectedBucket: %d / mashedHash: 0x%016x\n", hashkey, selectedBucket, maskedHash)
 
 	for b != nil {
-		// fmt.Printf("    entryCount: %d\n", b.entryCount)
-		// fmt.Printf("    entries: [\n")
-		// for i := uint64(0); i < uint64(b.entryCount); i++ {
-		// 	fmt.Printf("      [0x%016x,%s] -> %s\n", b.hobs.Read(i), b.entries[i].key, b.entries[i].value)
-		// }
-		// fmt.Printf("    ]\n")
-
 		for index := uint64(0); index < totalEntries; index++ {
 			// fmt.Printf("0x%016x <-> 0x%016x :: %s <-> %s\n", b.hobs.Read(index), maskedHash, b.entries[index].key, key)
 			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
@@ -286,8 +278,6 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 	lobSize := memory.PowerOf(initialSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
-
-	// fmt.Printf("lobSize: %d; lobMask: 0x%032b\n", lobSize, lobMask)
 
 	src := rand.NewSource(time.Now().UnixNano())
 	random := rand.New(src)

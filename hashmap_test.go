@@ -21,7 +21,6 @@ func Test_Hashmap(t *testing.T) {
 	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}
-	fmt.Println(original.String())
 	for k, v := range data {
 		result := original.Get(k)
 		if result != v {
@@ -303,8 +302,6 @@ func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 	}
 
 	original := NewHashMap(contents, nil)
-	// fmt.Printf("%#v\n", original)
-	// for k, v := range contents {
 	for i := 0; i < max; i++ {
 		k := IntKey(i)
 		result := original.Get(k)
