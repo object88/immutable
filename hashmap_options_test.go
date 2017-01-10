@@ -31,3 +31,12 @@ func Test_HashMapOptions_Clone_FromExisting(t *testing.T) {
 		t.Fatalf("Incorrect default for BucketStrategy; expected %s, got %s\n", defaultOptions.BucketStrategy, clone.BucketStrategy)
 	}
 }
+
+func Test_HashmapOptions_SharedInternally(t *testing.T) {
+	original := NewHashMap(map[Key]Value{IntKey(1): "a"}, nil)
+	modified, _ := original.Insert(IntKey(2), "b")
+
+	if modified.options != original.options {
+		t.Fatalf("Created new options object from mutating function")
+	}
+}
