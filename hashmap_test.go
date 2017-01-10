@@ -3,8 +3,6 @@ package immutable
 import (
 	"fmt"
 	"testing"
-
-	"github.com/object88/immutable/memory"
 )
 
 func Test_Hashmap(t *testing.T) {
@@ -52,20 +50,6 @@ func Test_HashMap_Empty_Size(t *testing.T) {
 	size := original.Size()
 	if size != 0 {
 		t.Fatalf("Expected 0 size, got %d\n", size)
-	}
-}
-
-func Test_Hashmap_ChangeOptions(t *testing.T) {
-	options := NewHashMapOptions()
-	options.BucketStrategy = memory.SmallBlock
-	original := NewHashMap(map[Key]Value{}, options)
-	if original.options.BucketStrategy != memory.SmallBlock {
-		t.Fatalf("Passed in options were not honored for BucketStrategy; expected %s, got %s\n", memory.SmallBlock, original.options.BucketStrategy)
-	}
-
-	options.BucketStrategy = memory.LargeBlock
-	if original.options.BucketStrategy != memory.SmallBlock {
-		t.Fatalf("Changing bucket strategy on options altered hashmap; expected %s, got %s\n", memory.SmallBlock, original.options.BucketStrategy)
 	}
 }
 

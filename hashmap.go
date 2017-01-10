@@ -36,7 +36,12 @@ const (
 
 // NewHashMap creates a new instance of a HashMap
 func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
-	hash := createHashMap(len(contents), options)
+	// Must clone the options, so that if the user accidently or deliberately
+	// changes some setting after the hashmap has been created, we don't do
+	// something unclever with our memory operations.
+	optionsClone := options.cloneHashMapOptions()
+
+	hash := createHashMap(len(contents), optionsClone)
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -117,38 +122,42 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
+	if h == nil {
+		result := createHashMap(1, NewHashMapOptions())
+		result.internalSet(key, value)
+		return result, nil
+	}
+
 	foundValue := h.Get(key)
 	matched := foundValue != nil
 	if matched && foundValue == value {
 		return h, nil
 	}
 
+	var result *HashMap
 	size := h.Size()
-	if !matched {
-		size++
-	}
-	result := createHashMap(size, nil)
+	if matched {
+		result = createHashMap(size, h.options)
 
-	if h != nil {
 		abort := make(chan struct{})
-		if matched {
-			for kvp := range h.iterate(abort) {
-				insertValue := kvp.value
-				if kvp.key == key {
-					insertValue = value
-				}
-				result.internalSet(kvp.key, insertValue)
+		for kvp := range h.iterate(abort) {
+			insertValue := kvp.value
+			if kvp.key == key {
+				insertValue = value
 			}
-		} else {
-			for kvp := range h.iterate(abort) {
-				result.internalSet(kvp.key, kvp.value)
-			}
+			result.internalSet(kvp.key, insertValue)
 		}
-	}
+	} else {
+		size++
+		result = createHashMap(size, h.options)
+		abort := make(chan struct{})
+		for kvp := range h.iterate(abort) {
+			result.internalSet(kvp.key, kvp.value)
+		}
 
-	if !matched {
 		result.internalSet(key, value)
 	}
+
 	return result, nil
 }
 
@@ -220,6 +229,8 @@ func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
 	var options *HashMapOptions
 	if h != nil {
 		options = h.options
+	} else {
+		options = NewHashMapOptions()
 	}
 	hash := createHashMap(size, options)
 
@@ -257,18 +268,13 @@ func (h *HashMap) internalSet(key Key, value Value) {
 }
 
 func createHashMap(size int, options *HashMapOptions) *HashMap {
-	// Must clone the options, so that if the user accidently or deliberately
-	// changes some setting after the hashmap has been created, we don't do
-	// something unclever with our memory operations.
-	optionsClone := options.cloneHashMapOptions()
-
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
 	lobMask := uint32(^(0xffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
 
-	return &HashMap{optionsClone, initialCount, int(initialSize), buckets, lobMask, lobSize}
+	return &HashMap{options, initialCount, int(initialSize), buckets, lobMask, lobSize}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
