@@ -9,8 +9,8 @@ type MyKey struct {
 	value int
 }
 
-func (k MyKey) Hash() uint32 {
-	return uint32(k.value)
+func (k MyKey) Hash(seed uint32) uint64 {
+	return uint64(k.value)
 }
 
 func (k MyKey) String() string {

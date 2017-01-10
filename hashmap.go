@@ -2,6 +2,8 @@ package immutable
 
 import (
 	"math"
+	"math/rand"
+	"time"
 
 	"github.com/object88/immutable/memory"
 )
@@ -26,11 +28,11 @@ type HashMap struct {
 	buckets []*bucket
 	lobMask uint32
 	lobSize uint8
+	seed    uint32
 }
 
 const (
-	// lobSize        = 3
-	bucketCapacity = 1 << 3 //lobSize
+	bucketCapacity = 1 << 3
 	loadFactor     = 6.0
 )
 
@@ -56,17 +58,21 @@ func (h *HashMap) Get(key Key) Value {
 		return nil
 	}
 
-	hashkey := key.Hash()
+	hashkey := key.Hash(h.seed)
 
-	selectedBucket := hashkey & h.lobMask
+	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
 	maskedHash := hashkey >> h.lobSize
 
 	totalEntries := uint64(b.entryCount)
 
+	// fmt.Printf("\nlobSize: %d; h.lobMask: 0x%016x\n", h.lobSize, h.lobMask)
+	// fmt.Printf("hashKey: 0x%016x / selectedBucket: %d / mashedHash: 0x%016x\n", hashkey, selectedBucket, maskedHash)
+
 	for b != nil {
 		for index := uint64(0); index < totalEntries; index++ {
-			if uint32(b.hobs.Read(index)) == maskedHash && b.entries[index].key == key {
+			// fmt.Printf("0x%016x <-> 0x%016x :: %s <-> %s\n", b.hobs.Read(index), maskedHash, b.entries[index].key, key)
+			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
 				return b.entries[index].value
 			}
 		}
@@ -135,11 +141,10 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	}
 
 	var result *HashMap
+	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
 		result = createHashMap(size, h.options)
-
-		abort := make(chan struct{})
 		for kvp := range h.iterate(abort) {
 			insertValue := kvp.value
 			if kvp.key == key {
@@ -150,7 +155,6 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	} else {
 		size++
 		result = createHashMap(size, h.options)
-		abort := make(chan struct{})
 		for kvp := range h.iterate(abort) {
 			result.internalSet(kvp.key, kvp.value)
 		}
@@ -226,13 +230,7 @@ func (h *HashMap) Size() int {
 }
 
 func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
-	var options *HashMapOptions
-	if h != nil {
-		options = h.options
-	} else {
-		options = NewHashMapOptions()
-	}
-	hash := createHashMap(size, options)
+	hash := createHashMap(size, h.options)
 
 	for _, v := range contents {
 		if v != nil {
@@ -244,26 +242,25 @@ func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
 }
 
 func (h *HashMap) internalSet(key Key, value Value) {
-	// lobSize := h.lobSize // uint32(memory.PowerOf(h.size))
-	hobSize := uint32(32 - h.lobSize)
+	hobSize := uint32(64 - h.lobSize)
 
-	hashkey := key.Hash()
-	selectedBucket := hashkey & h.lobMask
+	hashkey := key.Hash(h.seed)
+	selectedBucket := hashkey & uint64(h.lobMask)
 	// fmt.Printf("At [%s,%s]; h:0x%08x, sb: %d, lob: 0x%08x\n", key, value, hashkey, selectedBucket, hashkey>>h.lobSize)
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		// Create the bucket.
-		b = createEmptyBucket(memory.LargeBlock, hobSize)
+		b = createEmptyBucket(h.options.BucketStrategy, hobSize)
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == 8 {
 		if b.overflow == nil {
-			b.overflow = createEmptyBucket(memory.LargeBlock, hobSize)
+			b.overflow = createEmptyBucket(h.options.BucketStrategy, hobSize)
 		}
 		b = b.overflow
 	}
 	b.entries[b.entryCount] = entry{key, value}
-	b.hobs.Assign(uint64(b.entryCount), uint64(hashkey>>h.lobSize))
+	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
 }
 
@@ -274,7 +271,11 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 	lobMask := uint32(^(0xffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
 
-	return &HashMap{options, initialCount, int(initialSize), buckets, lobMask, lobSize}
+	src := rand.NewSource(time.Now().UnixNano())
+	random := rand.New(src)
+	seed := uint32(random.Int31())
+
+	return &HashMap{options, initialCount, int(initialSize), buckets, lobMask, lobSize, seed}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {

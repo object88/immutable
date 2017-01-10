@@ -14,11 +14,11 @@ type MyBadKey struct {
 	value int
 }
 
-func (k MyBadKey) Hash() uint32 {
+func (k MyBadKey) Hash(seed uint32) uint64 {
 	if k.value%2 == 0 {
 		return 0x0
 	}
-	return 0xffffffff
+	return 0xffffffffffffffff
 }
 
 func (k MyBadKey) String() string {
