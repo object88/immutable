@@ -1,8 +1,10 @@
-package immutable
+package hashmap
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/object88/immutable"
 )
 
 type MyKey struct {
@@ -18,7 +20,7 @@ func (k MyKey) String() string {
 }
 
 func Test_HashMap_CustomKey(t *testing.T) {
-	data := map[Key]Value{MyKey{1}: "a", MyKey{2}: "b"}
+	data := map[immutable.Key]immutable.Value{MyKey{1}: "a", MyKey{2}: "b"}
 	original := NewHashMap(data, nil)
 	if original == nil {
 		t.Fatal("NewHashMap returned nil\n")

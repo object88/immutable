@@ -25,7 +25,8 @@ type ReducePredicate func(accumulator Value, key Key, value Value) (Value, error
 // Value is a value
 type Value interface{}
 
-type keyValuePair struct {
-	key   Key
-	value Value
+// KeyValuePair is used by hashmap
+type KeyValuePair struct {
+	Key   Key
+	Value Value
 }

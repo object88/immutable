@@ -1,8 +1,10 @@
-package immutable
+package hashmap
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/object88/immutable"
 )
 
 // This suite of tests is designed to test the bucket overflow behavior.
@@ -27,7 +29,7 @@ func (k MyBadKey) String() string {
 
 func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	max := 100
-	data := make(map[Key]Value, max)
+	data := make(map[immutable.Key]immutable.Value, max)
 	for i := 0; i < max; i++ {
 		data[MyBadKey{i}] = false
 	}
@@ -39,7 +41,7 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	if size != len(data) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
-	original.ForEach(func(k Key, v Value) {
+	original.ForEach(func(k immutable.Key, v immutable.Value) {
 		if v.(bool) {
 			t.Fatalf("At %s, already visited\n", k)
 		}
@@ -61,7 +63,7 @@ func (v MyIntValue) String() string {
 
 func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	max := 100
-	contents := make(map[Key]Value, max)
+	contents := make(map[immutable.Key]immutable.Value, max)
 	for i := 0; i < max; i++ {
 		contents[MyBadKey{i}] = MyIntValue(i)
 	}

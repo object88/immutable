@@ -1,14 +1,16 @@
-package immutable
+package hashmap
 
 import (
 	"errors"
 	"testing"
+
+	"github.com/object88/immutable"
 )
 
 func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 	var original *HashMap
 	invokeCount := 0
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
 		return v.(int) * 2, nil
 	})
@@ -24,10 +26,10 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithEmpty(t *testing.T) {
-	contents := map[Key]Value{}
+	contents := map[immutable.Key]immutable.Value{}
 	original := NewHashMap(contents, nil)
 	invokeCount := 0
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
 		return v.(int) * 2, nil
 	})
@@ -43,14 +45,14 @@ func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithContents(t *testing.T) {
-	contents := map[Key]Value{
-		IntKey(1): 1,
-		IntKey(2): 2,
-		IntKey(3): 3,
+	contents := map[immutable.Key]immutable.Value{
+		immutable.IntKey(1): 1,
+		immutable.IntKey(2): 2,
+		immutable.IntKey(3): 3,
 	}
 	original := NewHashMap(contents, nil)
 	invokeCount := 0
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
+	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
 		return v.(int) * 2, nil
 	})
@@ -70,14 +72,14 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithCancel(t *testing.T) {
-	contents := map[Key]Value{
-		IntKey(1): 1,
-		IntKey(2): 2,
-		IntKey(3): 3,
+	contents := map[immutable.Key]immutable.Value{
+		immutable.IntKey(1): 1,
+		immutable.IntKey(2): 2,
+		immutable.IntKey(3): 3,
 	}
 	original := NewHashMap(contents, nil)
-	modified, err := original.Map(func(k Key, v Value) (Value, error) {
-		if k.(IntKey)%2 == 0 {
+	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+		if k.(immutable.IntKey)%2 == 0 {
 			return nil, errors.New("Found an even key")
 		}
 		return v.(int) * 2, nil
