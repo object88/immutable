@@ -1,12 +1,47 @@
 package memory
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
+
+func Test_Small_AllocateMemories(t *testing.T) {
+	testCases := []struct {
+		bits     uint32
+		count    uint32
+		expected int
+	}{}
+	for index, tc := range testCases {
+		t.Run(fmt.Sprintf("%d", index), func(t *testing.T) {
+			m := AllocateMemories(SmallBlock, tc.bits, tc.count)
+			mem := m.(*Memories32).m
+			evaluate(t, len(mem), tc.expected)
+		})
+	}
+}
 
 func Test_Large_AllocateMemories(t *testing.T) {
-	evaluateLargeAllocate(t, 32, 1, 1)
-	evaluateLargeAllocate(t, 32, 2, 2)
-	evaluateLargeAllocate(t, 25, 1, 1)
-	evaluateLargeAllocate(t, 25, 2, 2)
+	testCases := []struct {
+		bits     uint32
+		count    uint32
+		expected int
+	}{
+		{32, 1, 1},
+		{32, 2, 2},
+		{25, 1, 1},
+		{25, 2, 2},
+	}
+	for index, tc := range testCases {
+		t.Run(fmt.Sprintf("%d", index), func(t *testing.T) {
+			m := AllocateMemories(LargeBlock, tc.bits, tc.count)
+			mem := m.(*Memories32).m
+			evaluate(t, len(mem), tc.expected)
+		})
+	}
+	// evaluateLargeAllocate(t, 32, 1, 1)
+	// evaluateLargeAllocate(t, 32, 2, 2)
+	// evaluateLargeAllocate(t, 25, 1, 1)
+	// evaluateLargeAllocate(t, 25, 2, 2)
 }
 
 func Test_ExtraLarge_AllocateMemories(t *testing.T) {
@@ -31,11 +66,11 @@ func Test_NoPacking_AllocateMemories(t *testing.T) {
 	evaluateNoPackingAllocate(t, 4, 4)
 }
 
-func evaluateLargeAllocate(t *testing.T, bits, count uint32, expected int) {
-	m := AllocateMemories(LargeBlock, bits, count)
-	mem := m.(*Memories32).m
-	evaluate(t, len(mem), expected)
-}
+// func evaluateLargeAllocate(t *testing.T, bits, count uint32, expected int) {
+// 	m := AllocateMemories(LargeBlock, bits, count)
+// 	mem := m.(*Memories32).m
+// 	evaluate(t, len(mem), expected)
+// }
 
 func evaluateExtraLargeAllocate(t *testing.T, bits, count uint32, expected int) {
 	m := AllocateMemories(ExtraLargeBlock, bits, count)

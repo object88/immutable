@@ -1,39 +1,38 @@
 package memory
 
-// import "testing"
-//
-// func Test_AllocateMemories(t *testing.T) {
-// 	m := AllocateMemories(32, 1)
-// 	byteCount := len(m.m)
-// 	if byteCount != 4 {
-// 		t.Fatalf("Incorrect byte count; expected 1, got %d", byteCount)
-// 	}
-// }
-//
-// func Test_AllocateMemories_GreaterThanZeroCount(t *testing.T) {
-// 	m := AllocateMemories(32, 2)
-// 	byteCount := len(m.m)
-// 	if byteCount != 8 {
-// 		t.Fatal("Incorrect byte count")
-// 	}
-// }
-//
-// func Test_AllocateMemories_NonByteAlignedSize(t *testing.T) {
-// 	m := AllocateMemories(25, 1)
-// 	byteCount := len(m.m)
-// 	if byteCount != 4 {
-// 		t.Fatal("Incorrect byte count")
-// 	}
-// }
-//
-// func Test_AllocateMemories_NonByteAlignedSize_GreaterThanZeroCount(t *testing.T) {
-// 	m := AllocateMemories(25, 2)
-// 	byteCount := len(m.m)
-// 	if byteCount != 7 {
-// 		t.Fatal("Incorrect byte count")
-// 	}
-// }
-//
+import (
+	"math"
+	"math/rand"
+	"testing"
+	"time"
+)
+
+func Test_Small_Random(t *testing.T) {
+	src := rand.NewSource(time.Now().UnixNano())
+	random := rand.New(src)
+
+	width := uint32(64 - 11)
+	max := int64(math.Pow(2.0, float64(width)))
+
+	count := 8
+	contents := make([]uint64, count)
+	for i := 0; i < count; i++ {
+		contents[i] = uint64(random.Int63n(max))
+	}
+
+	m := AllocateMemories(SmallBlock, width, uint32(count))
+	for k, v := range contents {
+		m.Assign(uint64(k), v)
+	}
+
+	for k, v := range contents {
+		result := m.Read(uint64(k))
+		if result != v {
+			t.Fatalf("At %d\nexpected %064b\nreceived %064b\n", k, v, result)
+		}
+	}
+}
+
 // func Test_Read(t *testing.T) {
 // 	m := AllocateMemories(4, 8)
 // 	m.m[0] = 0x0f
