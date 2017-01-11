@@ -53,9 +53,9 @@ func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(key Key) Value {
+func (h *HashMap) Get(key Key) (result Value, ok bool) {
 	if h == nil || h.count == 0 {
-		return nil
+		return nil, false
 	}
 
 	hashkey := key.Hash(h.seed)
@@ -73,12 +73,12 @@ func (h *HashMap) Get(key Key) Value {
 		for index := uint64(0); index < totalEntries; index++ {
 			// fmt.Printf("0x%016x <-> 0x%016x :: %s <-> %s\n", b.hobs.Read(index), maskedHash, b.entries[index].key, key)
 			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
-				return b.entries[index].value
+				return b.entries[index].value, true
 			}
 		}
 		b = b.overflow
 	}
-	return nil
+	return nil, false
 }
 
 func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
@@ -134,7 +134,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 		return result, nil
 	}
 
-	foundValue := h.Get(key)
+	foundValue, _ := h.Get(key)
 	matched := foundValue != nil
 	if matched && foundValue == value {
 		return h, nil
@@ -201,7 +201,7 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 		return createHashMap(0, h.options), nil
 	}
 
-	if h.Get(key) == nil {
+	if result, _ := h.Get(key); result == nil {
 		return h, nil
 	}
 

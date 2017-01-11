@@ -60,7 +60,7 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 		t.Error(err)
 	}
 	for k, v := range contents {
-		result := modified.Get(k)
+		result, _ := modified.Get(k)
 		expected := v.(int) * 2
 		if result != expected {
 			t.Fatalf("At %s, got incorrect result, expected %d, got %d\n", k, expected, result)
