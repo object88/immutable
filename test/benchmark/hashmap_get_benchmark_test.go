@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/object88/immutable"
 	"github.com/object88/immutable/memory"
 )
 
@@ -16,19 +17,19 @@ const (
 	max             = 500000
 )
 
-var keys []IntKey
-var contents map[Key]Value
+var keys []immutable.IntKey
+var contents map[immutable.Key]immutable.Value
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-var hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *HashMap
+var hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.HashMap
 
 func init() {
 	stringLength := 100
-	contents = make(map[Key]Value, max)
-	keys = make([]IntKey, max)
+	contents = make(map[immutable.Key]immutable.Value, max)
+	keys = make([]immutable.IntKey, max)
 	for i := 0; i < max; i++ {
-		keys[i] = IntKey(i)
+		keys[i] = immutable.IntKey(i)
 		contents[keys[i]] = generateString(stringLength)
 	}
 	hashmapLargeBlock = createWithStragety(memory.LargeBlock)
@@ -64,14 +65,14 @@ func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 	}
 }
 
-func createWithStragety(blocksize memory.BlockSize) *HashMap {
-	options := NewHashMapOptions()
+func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
+	options := immutable.NewHashMapOptions()
 	options.BucketStrategy = blocksize
-	original := NewHashMap(contents, options)
+	original := immutable.NewHashMap(contents, options)
 	return original
 }
 
-func testStrategy(original *HashMap) {
+func testStrategy(original *immutable.HashMap) {
 	var r string
 	for _, key := range keys {
 		r = original.Get(key).(string)

@@ -3,4 +3,4 @@
 
 go test -bench=Benchmark_Hashmap_Get_LargeBlock -run=NONE -cpuprofile=./cpu.prof
 
-go tool pprof -pdf ./immutable.test ./cpu.prof > ./cpu.pdf
+go tool pprof -pdf ./benchmark.test ./cpu.prof > ./cpu.pdf
