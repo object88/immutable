@@ -137,6 +137,18 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 	}
 }
 
+func Test_Hashmap_Insert_NilKey(t *testing.T) {
+	contents := map[Key]Value{IntKey(1): "a"}
+	original := NewHashMap(contents, nil)
+	modified, err := original.Insert(nil, "aa")
+	if err == nil {
+		t.Fatal("Insert with nil key did not return error")
+	}
+	if modified != nil {
+		t.Fatalf("Insert with nil key returned hashmap %s\n", modified)
+	}
+}
+
 func Test_Hashmap_Insert_NilValue(t *testing.T) {
 	contents := map[Key]Value{IntKey(1): "a"}
 	original := NewHashMap(contents, nil)

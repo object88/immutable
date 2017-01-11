@@ -1,6 +1,7 @@
 package immutable
 
 import (
+	"errors"
 	"math"
 	"math/rand"
 	"time"
@@ -54,7 +55,7 @@ func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
 
 // Get returns the value for the given key
 func (h *HashMap) Get(key Key) (result Value, ok bool) {
-	if h == nil || h.count == 0 {
+	if h == nil || h.count == 0 || key == nil {
 		return nil, false
 	}
 
@@ -128,6 +129,10 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
+	if key == nil {
+		return nil, errors.New("Key is nil")
+	}
+
 	if h == nil {
 		result := createHashMap(1, NewHashMapOptions())
 		result.internalSet(key, value)

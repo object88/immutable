@@ -10,17 +10,17 @@ The hashmap is a key-value pair collection based on Go's native map implementati
 
 #### Methods
 
-`Get(key Key) Value`
+`Get(key Key) (result Value, ok bool)`
 
-The get method searches the collection for a key-value pair with the matching key, and returns the value.  In the case where there is no matching key, or the pointer receiver is nil, then `nil` is returned.
+The get method searches the collection for a key-value pair with the matching key, and returns the value.  In the case where there is no matching key, or the pointer receiver is `nil`, then `ok` is `false`.  If a valid value is returned (including `nil`), then `ok` is `true`.
 
 `Insert(key Key, value Value) (*HashMap, error)`
 
-The insert method creates a copy of the provided hashmap collection with the provided key-value pair added.
+The insert method creates a copy of the provided hashmap collection with the provided key-value pair added.  The `key` may not be `nil`, but `value` may.
 
 `Remove(key Key) (*HashMap, error)`
 
-The remove method creates a copy of the provided hashmap collection, with the entry at the specified key removed.  If the method would result in no change, the same reference is returned. 
+The remove method creates a copy of the provided hashmap collection, with the entry at the specified key removed.  If the method would result in no change, the same reference is returned.
 
 ### Common functions
 
