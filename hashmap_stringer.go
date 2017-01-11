@@ -6,6 +6,10 @@ import (
 )
 
 func (h *HashMap) String() string {
+	if h == nil {
+		return "(nil)"
+	}
+
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("Size: %d\n", h.size))
 	buffer.WriteString(fmt.Sprintf("[\n"))

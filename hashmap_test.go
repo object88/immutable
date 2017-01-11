@@ -375,3 +375,35 @@ func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 		}
 	}
 }
+
+func Test_Hashmap_String_WithUnassigned(t *testing.T) {
+	var original *HashMap
+
+	s := original.String()
+	if s != "(nil)" {
+		t.Fatal("Got wrong string")
+	}
+
+	s = original.GoString()
+	if s != "(nil)" {
+		t.Fatalf("Got wring go-string")
+	}
+}
+
+func Test_Hashmap_String_WithContents(t *testing.T) {
+	contents := map[Key]Value{
+		IntKey(0): "a",
+		IntKey(1): "b",
+	}
+	original := NewHashMap(contents, nil)
+
+	s := original.String()
+	if len(s) == 0 {
+		t.Fatal("Failed to get string")
+	}
+
+	s = original.GoString()
+	if len(s) == 0 {
+		t.Fatal("Failed to get go-string")
+	}
+}
