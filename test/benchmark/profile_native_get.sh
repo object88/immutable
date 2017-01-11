@@ -3,4 +3,4 @@
 
 go test -bench=Benchmark_Hashmap_Get_Native -run=NONE -cpuprofile=./cpu_native_get.prof
 
-go tool pprof -pdf ./immutable.test ./cpu_native_get.prof > ./cpu_native_get.pdf
+go tool pprof -pdf ./benchmark.test ./cpu_native_get.prof > ./cpu_native_get.pdf
