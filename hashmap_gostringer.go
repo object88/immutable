@@ -9,7 +9,6 @@ import (
 // for example, with the '%#v' operand to fmt.Printf, fmt.Sprintf, etc.
 func (h *HashMap) GoString() string {
 	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("Count: %d\n", h.count))
 	buffer.WriteString(fmt.Sprintf("Size: %d\n", h.size))
 	buffer.WriteString("[\n")
 	for k, v := range h.buckets {

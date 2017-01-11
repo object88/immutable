@@ -24,7 +24,6 @@ type entry struct {
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
 	options *HashMapOptions
-	count   int
 	size    int
 	buckets []*bucket
 	lobMask uint32
@@ -55,7 +54,7 @@ func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
 
 // Get returns the value for the given key
 func (h *HashMap) Get(key Key) (result Value, ok bool) {
-	if h == nil || h.count == 0 || key == nil {
+	if h == nil || h.size == 0 || key == nil {
 		return nil, false
 	}
 
@@ -68,11 +67,19 @@ func (h *HashMap) Get(key Key) (result Value, ok bool) {
 	totalEntries := uint64(b.entryCount)
 
 	// fmt.Printf("\nlobSize: %d; h.lobMask: 0x%016x\n", h.lobSize, h.lobMask)
-	// fmt.Printf("hashKey: 0x%016x / selectedBucket: %d / mashedHash: 0x%016x\n", hashkey, selectedBucket, maskedHash)
+	// fmt.Printf(
+	// 	"hashKey: 0x%016x / selectedBucket: %d / mashedHash: 0x%016x\n",
+	// 	hashkey,
+	// 	selectedBucket,
+	// 	maskedHash)
 
 	for b != nil {
 		for index := uint64(0); index < totalEntries; index++ {
-			// fmt.Printf("0x%016x <-> 0x%016x :: %s <-> %s\n", b.hobs.Read(index), maskedHash, b.entries[index].key, key)
+			// fmt.Printf(
+			// 	"0x%016x <-> 0x%016x :: %s <-> %s\n",
+			// 	b.hobs.Read(index),
+			// 	maskedHash,
+			// 	b.entries[index].key, key)
 			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
 				return b.entries[index].value, true
 			}
@@ -202,7 +209,7 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 		return nil, nil
 	}
 
-	if h.count == 0 {
+	if h.size == 0 {
 		return createHashMap(0, h.options), nil
 	}
 
@@ -231,7 +238,7 @@ func (h *HashMap) Size() int {
 	if h == nil {
 		return 0
 	}
-	return h.count
+	return h.size
 }
 
 func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
@@ -251,7 +258,6 @@ func (h *HashMap) internalSet(key Key, value Value) {
 
 	hashkey := key.Hash(h.seed)
 	selectedBucket := hashkey & uint64(h.lobMask)
-	// fmt.Printf("At [%s,%s]; h:0x%08x, sb: %d, lob: 0x%08x\n", key, value, hashkey, selectedBucket, hashkey>>h.lobSize)
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		// Create the bucket.
@@ -280,7 +286,7 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 	random := rand.New(src)
 	seed := uint32(random.Int31())
 
-	return &HashMap{options, initialCount, int(initialSize), buckets, lobMask, lobSize, seed}
+	return &HashMap{options, initialCount, buckets, lobMask, lobSize, seed}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
