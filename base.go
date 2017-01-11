@@ -2,7 +2,7 @@ package immutable
 
 // Base describes the low-level set of functions
 type Base interface {
-	Get(key Key) Value
+	Get(key Key) (result Value, ok bool)
 	Size() int
 	instantiate(initialSize int, contents []*keyValuePair) *BaseStruct
 	internalSet(key Key, value Value)

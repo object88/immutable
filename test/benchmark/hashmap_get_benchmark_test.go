@@ -73,11 +73,11 @@ func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
 }
 
 func testStrategy(original *immutable.HashMap) {
-	var r string
+	var r immutable.Value
 	for _, key := range keys {
-		r = original.Get(key).(string)
+		r, _ = original.Get(key)
 	}
-	result = r
+	result = r.(string)
 }
 
 // This code copied directly from StackOverflow; see randStringBytesMaskImprSrc

@@ -63,7 +63,7 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 	if size != 1 {
 		t.Fatalf("Incorrect number of elements in new collection; expected 1, got %d\n", size)
 	}
-	value := modified.Get(immutable.IntKey(2))
+	value, _ := modified.Get(immutable.IntKey(2))
 	if value == nil || value.(int) != 2 {
 		t.Fatalf("Incorrect contents of new collection:\n%s\n", modified)
 	}
