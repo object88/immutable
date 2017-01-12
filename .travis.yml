@@ -2,9 +2,3 @@ language: go
 
 go:
   - 1.7.x
-
-script:
-  - go build . ./hasher ./memory
-  - go test ./...
-  - cd ./test/benchmark
-  - go test -bench .
