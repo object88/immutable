@@ -1,0 +1,9 @@
+language: go
+
+go:
+  - 1.7.x
+
+script:
+  - go test ./...
+  - cd ./test/benchmark
+  - go test -bench .
