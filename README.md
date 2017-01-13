@@ -3,6 +3,8 @@
 
 _Note:_ This library is under development and is not meant for public consumption at this time.
 
+[![Build Status](https://travis-ci.org/object88/immutable.svg?branch=master)](https://travis-ci.org/object88/immutable)
+
 In general, this library seeks to avoid errors due to nil pointers or missing entries.  For example, if the `Size` method is invoked on a nil pointer, the value `0` is returned, rather than returning an error.  It is assumed that if the caller needs to know that the pointer receiver is not nil, the caller should perform that check.
 
 ### Hashmap
