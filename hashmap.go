@@ -52,6 +52,17 @@ func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
 	return hash
 }
 
+func (h *HashMap) GoMap(f MapPredicate, o *RoutineOptions) *HashRoutine {
+	hr := HashRoutine{
+		routine{
+			options: o,
+			base:    h,
+			err:     nil,
+		},
+	}
+	return hr.GoMap(f)
+}
+
 // Get returns the value for the given key
 func (h *HashMap) Get(key Key) (result Value, ok bool) {
 	if h == nil || h.size == 0 || key == nil {

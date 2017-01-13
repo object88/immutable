@@ -60,6 +60,16 @@ func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
 	return mutated, nil
 }
 
+func (b *BaseStruct) gomapping(predicate MapPredicate) (*BaseStruct, error) {
+	// mutated := b.instantiate(b.Size(), nil)
+	// abort := make(chan struct{})
+	// ch := b.iterate(abort)
+	//
+	// return mutated, nil
+
+	return nil, nil
+}
+
 func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
 	acc := accumulator
 	var err error
