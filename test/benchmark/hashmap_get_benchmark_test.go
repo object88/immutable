@@ -22,7 +22,7 @@ var contents map[immutable.Key]immutable.Value
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-var hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.HashMap
+var hashmapSmallBlock, hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.HashMap
 
 func init() {
 	stringLength := 100
@@ -32,9 +32,16 @@ func init() {
 		keys[i] = immutable.IntKey(i)
 		contents[keys[i]] = generateString(stringLength)
 	}
+	hashmapSmallBlock = createWithStragety(memory.SmallBlock)
 	hashmapLargeBlock = createWithStragety(memory.LargeBlock)
 	hashmapExtraLargeBlock = createWithStragety(memory.ExtraLargeBlock)
 	hashmapNoPacked = createWithStragety(memory.NoPacking)
+}
+
+func Benchmark_Hashmap_Get_SmallBlock(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testStrategy(hashmapSmallBlock)
+	}
 }
 
 func Benchmark_Hashmap_Get_LargeBlock(b *testing.B) {
