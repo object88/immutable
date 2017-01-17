@@ -381,12 +381,12 @@ func Test_Hashmap_String_WithUnassigned(t *testing.T) {
 
 	s := original.String()
 	if s != "(nil)" {
-		t.Fatal("Got wrong string")
+		t.Fatal("Got wrong string\n")
 	}
 
 	s = original.GoString()
 	if s != "(nil)" {
-		t.Fatalf("Got wring go-string")
+		t.Fatalf("Got wring go-string\n")
 	}
 }
 
@@ -399,11 +399,57 @@ func Test_Hashmap_String_WithContents(t *testing.T) {
 
 	s := original.String()
 	if len(s) == 0 {
-		t.Fatal("Failed to get string")
+		t.Fatal("Failed to get string\n")
 	}
 
 	s = original.GoString()
 	if len(s) == 0 {
-		t.Fatal("Failed to get go-string")
+		t.Fatal("Failed to get go-string\n")
+	}
+}
+
+func Test_Hashmap_GetKeys_WithUnassigned(t *testing.T) {
+	var original *HashMap
+	keys := original.GetKeys()
+	if keys != nil {
+		t.Fatalf("Got keys back from unassigned hashmap: %s\n", keys)
+	}
+}
+
+func Test_Hashmap_GetKeys_WithEmpty(t *testing.T) {
+	original := NewHashMap(map[Key]Value{}, nil)
+	keys := original.GetKeys()
+	if keys == nil {
+		t.Fatal("Got nil back from empty hashmap\n")
+	}
+	if len(keys) != 0 {
+		t.Fatalf("Got keys back from empty hashmap: %s\n", keys)
+	}
+}
+
+func Test_Hashmap_GetKeys_WithContents(t *testing.T) {
+	contents := map[Key]Value{
+		IntKey(1): "a",
+		IntKey(2): "b",
+	}
+	original := NewHashMap(contents, nil)
+	keys := original.GetKeys()
+	if keys == nil {
+		t.Fatal("Got nil back from empty hashmap\n")
+	}
+	if len(keys) != len(contents) {
+		t.Fatalf("Got wrong number of keys back from empty hashmap: %s\n", keys)
+	}
+	for k := range contents {
+		found := false
+		for i := 0; i < len(keys); i++ {
+			if keys[i] == k {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("Key %s not found in keys\n", k)
+		}
 	}
 }

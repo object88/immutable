@@ -89,6 +89,34 @@ func (h *HashMap) Get(key Key) (result Value, ok bool) {
 	return nil, false
 }
 
+// GetKeys returns an array of keys in the hashmap.  If there are no entries,
+// then an empty array is returned.  If the pointer reciever is nil, then
+// nil is returned.  The array of keys is not ordered.
+func (h *HashMap) GetKeys() (results []Key) {
+	if h == nil {
+		return nil
+	}
+
+	if h.size == 0 {
+		return []Key{}
+	}
+
+	results = make([]Key, h.size)
+	count := 0
+	for i := 0; i < len(h.buckets); i++ {
+		b := h.buckets[i]
+		if b == nil {
+			continue
+		}
+		for j := byte(0); j < b.entryCount; j++ {
+			results[count] = b.entries[j].key
+			count++
+		}
+	}
+
+	return results
+}
+
 func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 	ch := make(chan keyValuePair)
 
