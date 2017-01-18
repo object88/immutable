@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"unsafe"
 
 	"github.com/object88/immutable/memory"
 )
@@ -12,12 +13,13 @@ import (
 type bucket struct {
 	entryCount byte
 	hobs       memory.Memories
-	entries    []keyValuePair
+	entries    memory.Memories
 	overflow   *bucket
 }
 
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
+	meta    KeyMetadata
 	options *HashMapOptions
 	size    int
 	buckets []*bucket
@@ -32,13 +34,13 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
+func NewHashMap(meta KeyMetadata, contents map[Key]Value, options ...HashMapOption) *HashMap {
 	opts := defaultHashMapOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
 
-	hash := createHashMap(len(contents), opts)
+	hash := createHashMap(len(contents), meta, opts)
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -81,8 +83,14 @@ func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
 			// 	b.hobs.Read(index),
 			// 	maskedHash,
 			// 	b.entries[index].key, key)
-			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
-				return b.entries[index].value, true, nil
+			if b.hobs.Read(index) != maskedHash {
+				continue
+			}
+
+			i := 2 * index
+			if b.entries.Read(i) == key {
+				v := *unsafe.Pointer(uintptr(b.entries.Read(i + 1)))
+				return v.(interface{}), true, nil
 			}
 		}
 		b = b.overflow
@@ -188,7 +196,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
-		result = createHashMap(size, h.options)
+		result = createHashMap(size, h.meta, h.options)
 		for kvp := range h.iterate(abort) {
 			insertValue := kvp.value
 			if kvp.key == key {
@@ -198,7 +206,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 		}
 	} else {
 		size++
-		result = createHashMap(size, h.options)
+		result = createHashMap(size, h.meta, h.options)
 		for kvp := range h.iterate(abort) {
 			result.internalSet(kvp.key, kvp.value)
 		}
@@ -251,10 +259,10 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 	size := h.Size() - 1
 	if size == 0 {
-		return createHashMap(0, h.options), nil
+		return createHashMap(0, h.meta, h.options), nil
 	}
 
-	result := createHashMap(size, h.options)
+	result := createHashMap(size, h.meta, h.options)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
 		if kvp.key != key {
@@ -274,7 +282,7 @@ func (h *HashMap) Size() int {
 }
 
 func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
-	hash := createHashMap(size, h.options)
+	hash := createHashMap(size, h.meta, h.options)
 
 	for _, v := range contents {
 		if v != nil {
@@ -302,12 +310,15 @@ func (h *HashMap) internalSet(key Key, value Value) {
 		}
 		b = b.overflow
 	}
-	b.entries[b.entryCount] = keyValuePair{key, value}
+	i := uint64(2 * b.entryCount)
+	b.entries.Assign(i, key)
+	b.entries.Assign(i+1, uint64(uintptr(unsafe.Pointer(&value))))
+	// b.entries[b.entryCount] = keyValuePair{key, value}
 	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
 }
 
-func createHashMap(size int, options *HashMapOptions) *HashMap {
+func createHashMap(size int, meta KeyMetadata, options *HashMapOptions) *HashMap {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
@@ -318,14 +329,14 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 	random := rand.New(src)
 	seed := uint32(random.Int31())
 
-	return &HashMap{options, initialCount, buckets, lobMask, lobSize, seed}
+	return &HashMap{meta, options, initialCount, buckets, lobMask, lobSize, seed}
 }
 
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
 		hobs:       memory.AllocateMemories(blockSize, hobSize, bucketCapacity),
-		entries:    make([]keyValuePair, bucketCapacity),
+		entries:    memory.AllocateMemories(memory.NoPacking, 0, 2*bucketCapacity),
 		overflow:   nil,
 	}
 }

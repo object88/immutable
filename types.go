@@ -12,8 +12,16 @@ type ForEachPredicate func(key Key, value Value)
 type Key interface {
 	fmt.Stringer
 
-	// Hash calculates the 32-bit hash value for a Key
+	// Hash calculates the 64-bit hash value for a Key
 	Hash(seed uint32) uint64
+}
+
+type KeyMetadata interface {
+	// Indirect indicates whether the key should be stored as a pointer
+	Indirect() bool
+
+	// StorageSize returns the number of bytes required to store the key
+	StorageSize() int
 }
 
 // MapPredicate describes the predicate function used by the Map method

@@ -26,6 +26,16 @@ func (k IntKey) Hash(seed uint32) uint64 {
 	return hasher.Hash8(uintptr(k), seed)
 }
 
+type IntKeyMetadata struct{}
+
+func (IntKeyMetadata) Indirect() bool {
+	return false
+}
+
+func (IntKeyMetadata) StorageSize() int {
+	return 8
+}
+
 func (k IntKey) String() string {
 	return fmt.Sprintf("%d", int(k))
 }
