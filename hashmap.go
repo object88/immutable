@@ -12,13 +12,8 @@ import (
 type bucket struct {
 	entryCount byte
 	hobs       memory.Memories
-	entries    []entry
+	entries    []keyValuePair
 	overflow   *bucket
-}
-
-type entry struct {
-	key   Key
-	value Value
 }
 
 // HashMap is a read-only key-to-value collection
@@ -32,7 +27,7 @@ type HashMap struct {
 }
 
 const (
-	bucketCapacity = 1 << 3
+	bucketCapacity = 8
 	loadFactor     = 6.0
 )
 
@@ -301,13 +296,13 @@ func (h *HashMap) internalSet(key Key, value Value) {
 		b = createEmptyBucket(h.options.BucketStrategy, hobSize)
 		h.buckets[selectedBucket] = b
 	}
-	for b.entryCount == 8 {
+	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
 			b.overflow = createEmptyBucket(h.options.BucketStrategy, hobSize)
 		}
 		b = b.overflow
 	}
-	b.entries[b.entryCount] = entry{key, value}
+	b.entries[b.entryCount] = keyValuePair{key, value}
 	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
 }
@@ -329,8 +324,8 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
-		hobs:       memory.AllocateMemories(blockSize, hobSize, 8),
-		entries:    make([]entry, bucketCapacity),
+		hobs:       memory.AllocateMemories(blockSize, hobSize, bucketCapacity),
+		entries:    make([]keyValuePair, bucketCapacity),
 		overflow:   nil,
 	}
 }
