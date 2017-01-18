@@ -37,13 +37,18 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[Key]Value, options *HashMapOptions) *HashMap {
+func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
 	// Must clone the options, so that if the user accidently or deliberately
 	// changes some setting after the hashmap has been created, we don't do
 	// something unclever with our memory operations.
-	optionsClone := options.cloneHashMapOptions()
+	// optionsClone := options.cloneHashMapOptions()
 
-	hash := createHashMap(len(contents), optionsClone)
+	opts := defaultHashMapOptions()
+	for _, fn := range options {
+		fn(opts)
+	}
+
+	hash := createHashMap(len(contents), opts)
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -169,7 +174,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	}
 
 	if h == nil {
-		result := createHashMap(1, NewHashMapOptions())
+		result := createHashMap(1, defaultHashMapOptions())
 		result.internalSet(key, value)
 		return result, nil
 	}

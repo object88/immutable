@@ -73,9 +73,9 @@ func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 }
 
 func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
-	options := immutable.NewHashMapOptions()
-	options.BucketStrategy = blocksize
-	original := immutable.NewHashMap(contents, options)
+	// options := immutable.NewHashMapOptions()
+	// options.BucketStrategy = blocksize
+	original := immutable.NewHashMap(contents, immutable.WithBucketStrategy(blocksize))
 	return original
 }
 

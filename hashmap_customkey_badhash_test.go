@@ -31,7 +31,7 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	for i := 0; i < max; i++ {
 		data[MyBadKey{i}] = false
 	}
-	original := NewHashMap(data, nil)
+	original := NewHashMap(data)
 	if original == nil {
 		t.Fatal("NewHashMap returned nil\n")
 	}
@@ -66,7 +66,7 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 		contents[MyBadKey{i}] = MyIntValue(i)
 	}
 
-	original := NewHashMap(contents, nil)
+	original := NewHashMap(contents)
 
 	for k, v := range contents {
 		result, _ := original.Get(k)

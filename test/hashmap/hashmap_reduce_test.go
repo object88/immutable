@@ -27,7 +27,7 @@ func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 
 func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
 	contents := map[immutable.Key]immutable.Value{}
-	original := immutable.NewHashMap(contents, nil)
+	original := immutable.NewHashMap(contents)
 	invokeCount := 0
 	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
@@ -50,7 +50,7 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 		immutable.IntKey(2): 2,
 		immutable.IntKey(3): 3,
 	}
-	original := immutable.NewHashMap(contents, nil)
+	original := immutable.NewHashMap(contents)
 	invokeCount := 0
 	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
@@ -73,7 +73,7 @@ func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
 		immutable.IntKey(2): 2,
 		immutable.IntKey(3): 3,
 	}
-	original := immutable.NewHashMap(contents, nil)
+	original := immutable.NewHashMap(contents)
 	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		if k.(immutable.IntKey)%2 == 0 {
 			return nil, errors.New("Found an even key")
