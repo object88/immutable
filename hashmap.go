@@ -53,9 +53,15 @@ func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(key Key) (result Value, ok bool) {
-	if h == nil || h.size == 0 || key == nil {
-		return nil, false
+func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
+	if h == nil {
+		return nil, false, errors.New("Pointer receiver is nil")
+	}
+	if key == nil {
+		return nil, false, errors.New("Key is nil")
+	}
+	if h.size == 0 {
+		return nil, false, nil
 	}
 
 	hashkey := key.Hash(h.seed)
@@ -81,24 +87,24 @@ func (h *HashMap) Get(key Key) (result Value, ok bool) {
 			// 	maskedHash,
 			// 	b.entries[index].key, key)
 			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
-				return b.entries[index].value, true
+				return b.entries[index].value, true, nil
 			}
 		}
 		b = b.overflow
 	}
-	return nil, false
+	return nil, false, nil
 }
 
 // GetKeys returns an array of keys in the hashmap.  If there are no entries,
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
-func (h *HashMap) GetKeys() (results []Key) {
+func (h *HashMap) GetKeys() (results []Key, err error) {
 	if h == nil {
-		return nil
+		return nil, errors.New("Pointer receiver is nil")
 	}
 
 	if h.size == 0 {
-		return []Key{}
+		return []Key{}, nil
 	}
 
 	results = make([]Key, h.size)
@@ -114,7 +120,7 @@ func (h *HashMap) GetKeys() (results []Key) {
 		}
 	}
 
-	return results
+	return results, nil
 }
 
 func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
@@ -164,17 +170,20 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
 func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
+	if h == nil {
+		return nil, errors.New("Pointer receiver is nil")
+	}
 	if key == nil {
 		return nil, errors.New("Key is nil")
 	}
 
-	if h == nil {
-		result := createHashMap(1, defaultHashMapOptions())
+	if h.size == 0 {
+		result := createHashMap(1, h.options)
 		result.internalSet(key, value)
 		return result, nil
 	}
 
-	foundValue, _ := h.Get(key)
+	foundValue, _, _ := h.Get(key)
 	matched := foundValue != nil
 	if matched && foundValue == value {
 		return h, nil
@@ -234,14 +243,14 @@ func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, e
 // removed.
 func (h *HashMap) Remove(key Key) (*HashMap, error) {
 	if h == nil {
-		return nil, nil
+		return nil, errors.New("Pointer receiver is nil")
 	}
 
 	if h.size == 0 {
-		return createHashMap(0, h.options), nil
+		return h, nil
 	}
 
-	if result, _ := h.Get(key); result == nil {
+	if _, ok, _ := h.Get(key); !ok {
 		return h, nil
 	}
 

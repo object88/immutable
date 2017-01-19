@@ -79,7 +79,7 @@ func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
 func testStrategy(original *immutable.HashMap) {
 	var r immutable.Value
 	for _, key := range keys {
-		r, _ = original.Get(key)
+		r, _, _ = original.Get(key)
 	}
 	result = r.(string)
 }

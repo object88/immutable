@@ -69,7 +69,7 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	original := NewHashMap(contents)
 
 	for k, v := range contents {
-		result, _ := original.Get(k)
+		result, _, _ := original.Get(k)
 		if result != v {
 			t.Fatalf("At %s, expected %d, got %d\n%#v", k, v, result, original)
 		}
