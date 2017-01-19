@@ -1,9 +1,6 @@
 package immutable
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
 func Test_Hashmap(t *testing.T) {
 	data := map[Key]Value{
@@ -298,7 +295,10 @@ func Test_Hashmap_Remove_WithEmpty(t *testing.T) {
 	}
 	size := modified.Size()
 	if size != 0 {
-		fmt.Printf("Remove from empty hashmap returned a non-empty hashmap: %s\n", modified)
+		t.Fatalf("Remove from empty hashmap returned a non-empty hashmap: %s\n", modified)
+	}
+	if modified != original {
+		t.Fatal("Modified hashmap is not the same as original")
 	}
 }
 

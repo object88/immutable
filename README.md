@@ -22,7 +22,7 @@ If the key matches in the hash map, a valid value is returned (including `nil`),
 
 #### `GetKeys() (results []Key, err error)`
 
-The `GetKeys` method returns the collection of `Key` objects used to store values in the hashmap.  If the hashmap is unassigned, `nil` is returned, and if the hashmap does not have any contents, then a 0-length array is returned.
+The `GetKeys` method returns the collection of `Key` objects used to store values in the hashmap.  If the hashmap is unassigned, `err` is non-`nil`, and if the hashmap does not have any contents, then a 0-length array is returned.
 
 It is important to note that, just as the collection functions do not operate in any order, the `GetKeys` method will return the key collection in random order.
 
