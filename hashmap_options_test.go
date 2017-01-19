@@ -1,11 +1,27 @@
 package immutable
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/object88/immutable/memory"
+)
 
 func Test_HashMapOptions_Create(t *testing.T) {
 	options := defaultHashMapOptions()
 	if options == nil {
 		t.Fatalf("Create method returned nil")
+	}
+}
+
+func Test_HashMapOptions_WithBucketStrategy(t *testing.T) {
+	options := defaultHashMapOptions()
+	f := WithBucketStrategy(memory.ExtraLargeBlock)
+	if nil == f {
+		t.Fatalf("Fn returned from WithBucketStrategy is nil")
+	}
+	f(options)
+	if options.BucketStrategy != memory.ExtraLargeBlock {
+		t.Fatalf("Fn set wrong bucket strategy; got %s, expected %s", options.BucketStrategy, memory.ExtraLargeBlock)
 	}
 }
 
