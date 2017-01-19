@@ -5,18 +5,22 @@ _Note:_ This library is under development and is not meant for public consumptio
 
 [![Build Status](https://travis-ci.org/object88/immutable.svg?branch=master)](https://travis-ci.org/object88/immutable) [![Stories in Ready](https://badge.waffle.io/object88/immutable.svg?label=ready&title=Ready)](http://waffle.io/object88/immutable)
 
-In general, this library seeks to avoid errors due to nil pointers or missing entries.  For example, if the `Size` method is invoked on a nil pointer, the value `0` is returned, rather than returning an error.  It is assumed that if the caller needs to know that the pointer receiver is not nil, the caller should perform that check.
-
 ## Hashmap
 The hashmap is a key-value pair collection based on Go's native map implementation.
 
 ### Methods
 
-#### `Get(key Key) (result Value, ok bool)`
+#### `Get(key Key) (result Value, ok bool, err error)`
 
-The get method searches the collection for a key-value pair with the matching key, and returns the value.  In the case where there is no matching key, or the pointer receiver is `nil`, then `ok` is `false`.  If a valid value is returned (including `nil`), then `ok` is `true`.
+The get method searches the collection for a key-value pair with the matching key, and returns the value.
 
-#### `GetKeys() (results []Key)`
+If a `nil` pointer receiver is used, then an error is returned.  Additionally, `result` is `nil` and `ok` is `false`.
+
+If there is no matching key, then `result` is nil, `ok` is `false`, and `err` is `nil`.
+
+If the key matches in the hash map, a valid value is returned (including `nil`), and `ok` is `true`.
+
+#### `GetKeys() (results []Key, err error)`
 
 The `GetKeys` method returns the collection of `Key` objects used to store values in the hashmap.  If the hashmap is unassigned, `nil` is returned, and if the hashmap does not have any contents, then a 0-length array is returned.
 
