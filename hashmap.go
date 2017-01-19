@@ -181,7 +181,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	}
 
 	if h.size == 0 {
-		result := createHashMap(1, h.options)
+		result := createHashMap(1, h.meta, h.options)
 		result.internalSet(key, value)
 		return result, nil
 	}
