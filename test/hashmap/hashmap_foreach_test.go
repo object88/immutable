@@ -13,7 +13,7 @@ func Test_Hashmap_ForEach(t *testing.T) {
 		immutable.IntKey(2): false,
 		immutable.IntKey(3): false,
 	}
-	original := immutable.NewHashMap(data, nil)
+	original := immutable.NewHashMap(data)
 	if original == nil {
 		t.Fatal("Failed to create hashmap")
 	}

@@ -27,7 +27,7 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 
 func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 	contents := map[immutable.Key]immutable.Value{}
-	original := immutable.NewHashMap(contents, nil)
+	original := immutable.NewHashMap(contents)
 	invokeCount := 0
 	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
@@ -50,7 +50,7 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 		immutable.IntKey(2): 2,
 		immutable.IntKey(3): 3,
 	}
-	original := immutable.NewHashMap(contents, nil)
+	original := immutable.NewHashMap(contents)
 	invokeCount := 0
 	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		invokeCount++
@@ -60,7 +60,7 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 		t.Error(err)
 	}
 	for k, v := range contents {
-		result, _ := modified.Get(k)
+		result, _, _ := modified.Get(k)
 		expected := v.(int) * 2
 		if result != expected {
 			t.Fatalf("At %s, got incorrect result, expected %d, got %d\n", k, expected, result)
@@ -77,7 +77,7 @@ func Test_Hashmap_Map_WithCancel(t *testing.T) {
 		immutable.IntKey(2): 2,
 		immutable.IntKey(3): 3,
 	}
-	original := immutable.NewHashMap(contents, nil)
+	original := immutable.NewHashMap(contents)
 	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
 		if k.(immutable.IntKey)%2 == 0 {
 			return nil, errors.New("Found an even key")

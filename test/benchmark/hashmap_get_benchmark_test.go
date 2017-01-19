@@ -73,16 +73,13 @@ func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 }
 
 func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
-	options := immutable.NewHashMapOptions()
-	options.BucketStrategy = blocksize
-	original := immutable.NewHashMap(contents, options)
-	return original
+	return immutable.NewHashMap(contents, immutable.WithBucketStrategy(blocksize))
 }
 
 func testStrategy(original *immutable.HashMap) {
 	var r immutable.Value
 	for _, key := range keys {
-		r, _ = original.Get(key)
+		r, _, _ = original.Get(key)
 	}
 	result = r.(string)
 }
