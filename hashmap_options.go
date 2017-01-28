@@ -19,6 +19,10 @@ func WithIntegerKeyMetadata(o *HashMapOptions) {
 	o.KeyHandler = NewIntHandler()
 }
 
+func WithIntegerValueMetadata(o *HashMapOptions) {
+	o.ValueHandler = NewIntHandler()
+}
+
 func WithStringValueMetadata(o *HashMapOptions) {
 	o.ValueHandler = NewStringHandler()
 }

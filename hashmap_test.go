@@ -17,7 +17,7 @@ func Test_Hashmap(t *testing.T) {
 		IntElement(8):  StringElement("hh"),
 		IntElement(26): StringElement("zz"),
 	}
-	original := NewHashMap(data)
+	original := NewHashMap(data, WithIntegerKeyMetadata, WithStringValueMetadata)
 	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}
@@ -59,14 +59,14 @@ func Test_HashMap_Nil_Size(t *testing.T) {
 }
 
 func Test_HashMap_Empty_Create(t *testing.T) {
-	original := NewHashMap(map[Element]Element{})
+	original := NewHashMap(map[Element]Element{}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	if original == nil {
 		t.Fatalf("Creating HashMap with empty map returned nil\n")
 	}
 }
 
 func Test_HashMap_Empty_Size(t *testing.T) {
-	original := NewHashMap(map[Element]Element{})
+	original := NewHashMap(map[Element]Element{}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	size := original.Size()
 	if size != 0 {
 		t.Fatalf("Expected 0 size, got %d\n", size)
@@ -74,7 +74,7 @@ func Test_HashMap_Empty_Size(t *testing.T) {
 }
 
 func Test_Hashmap_Create_WithNilContents(t *testing.T) {
-	original := NewHashMap(nil)
+	original := NewHashMap(nil, WithIntegerKeyMetadata, WithStringValueMetadata)
 	if nil == original {
 		t.Fatal("NewHashMap with nil argument returned nil")
 	}
@@ -96,7 +96,7 @@ func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Insert_WithEmpty(t *testing.T) {
-	original := NewHashMap(map[Element]Element{})
+	original := NewHashMap(map[Element]Element{}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	key := IntElement(4)
 	value := StringElement("d")
 	modified, error := original.Insert(key, value)
@@ -122,7 +122,7 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 		IntElement(1): StringElement("b"),
 		IntElement(2): StringElement("c"),
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	key := IntElement(4)
 	value := StringElement("d")
 	modified, error := original.Insert(key, value)
@@ -150,7 +150,7 @@ func Test_Hashmap_Insert_WithContents(t *testing.T) {
 
 func Test_Hashmap_Insert_NilKey(t *testing.T) {
 	contents := map[Element]Element{IntElement(1): StringElement("a")}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, err := original.Insert(nil, StringElement("aa"))
 	if err == nil {
 		t.Fatal("Insert with nil key did not return error")
@@ -162,7 +162,7 @@ func Test_Hashmap_Insert_NilKey(t *testing.T) {
 
 func Test_Hashmap_Insert_NilValue(t *testing.T) {
 	contents := map[Element]Element{IntElement(1): StringElement("a")}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, err := original.Insert(IntElement(2), nil)
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -182,7 +182,7 @@ func Test_Hashmap_Insert_NilValue(t *testing.T) {
 
 func Test_Hashmap_Insert_WithSameKey(t *testing.T) {
 	contents := map[Element]Element{IntElement(1): StringElement("a"), IntElement(2): StringElement("b")}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, err := original.Insert(IntElement(1), StringElement("aa"))
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -202,7 +202,7 @@ func Test_Hashmap_Insert_WithSameKey(t *testing.T) {
 
 func Test_Hashmap_Insert_NilValue_WithSameKey(t *testing.T) {
 	contents := map[Element]Element{IntElement(1): StringElement("a"), IntElement(2): StringElement("b")}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, err := original.Insert(IntElement(1), nil)
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -222,7 +222,7 @@ func Test_Hashmap_Insert_NilValue_WithSameKey(t *testing.T) {
 
 func Test_Hashmap_Insert_WithSameKeyAndSameValue(t *testing.T) {
 	contents := map[Element]Element{IntElement(1): StringElement("a")}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, err := original.Insert(IntElement(1), StringElement("a"))
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -247,7 +247,7 @@ func Test_Hashmap_Get_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Get_WithEmpty(t *testing.T) {
-	original := NewHashMap(map[Element]Element{})
+	original := NewHashMap(map[Element]Element{}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	result, ok, err := original.Get(IntElement(2))
 	if err != nil {
 		t.Fatalf("Get from empty hashmap returned error '%s'\n", err)
@@ -262,7 +262,7 @@ func Test_Hashmap_Get_WithEmpty(t *testing.T) {
 
 func Test_Hashmap_Get_WithContents(t *testing.T) {
 	value := StringElement("a")
-	original := NewHashMap(map[Element]Element{IntElement(1): value})
+	original := NewHashMap(map[Element]Element{IntElement(1): value}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	result, ok, err := original.Get(IntElement(1))
 	if err != nil {
 		t.Fatalf("Get with contents returned error '%s'\n", err)
@@ -276,7 +276,7 @@ func Test_Hashmap_Get_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Get_Miss(t *testing.T) {
-	original := NewHashMap(map[Element]Element{IntElement(1): StringElement("a")})
+	original := NewHashMap(map[Element]Element{IntElement(1): StringElement("a")}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	result, ok, err := original.Get(IntElement(2))
 	if err != nil {
 		t.Fatalf("Get with contents returned error '%s'\n", err)
@@ -327,7 +327,7 @@ func Test_Hashmap_Remove_WithContents(t *testing.T) {
 		key1: value1,
 		key2: value2,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, error := original.Remove(key2)
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
@@ -355,7 +355,7 @@ func Test_Hashmap_Remove_WithContents_ToEmpty(t *testing.T) {
 	contents := map[Element]Element{
 		key1: value1,
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, error := original.Remove(key1)
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
@@ -374,7 +374,7 @@ func Test_Hashmap_Remove_Miss(t *testing.T) {
 		IntElement(0): StringElement("a"),
 		IntElement(1): StringElement("b"),
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	modified, error := original.Remove(IntElement(2))
 	if error != nil {
 		t.Fatalf("Error returned from remove: %s", error)
@@ -391,7 +391,7 @@ func Test_Hashmap_ReadAndWriteLargeDataSet(t *testing.T) {
 		contents[IntElement(i)] = IntElement(i)
 	}
 
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithIntegerValueMetadata)
 	for i := 0; i < max; i++ {
 		k := IntElement(i)
 		result, _, _ := original.Get(k)
@@ -421,7 +421,7 @@ func Test_Hashmap_String_WithContents(t *testing.T) {
 		IntElement(0): StringElement("a"),
 		IntElement(1): StringElement("b"),
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 
 	s := original.String()
 	if len(s) == 0 {
@@ -446,7 +446,7 @@ func Test_Hashmap_GetKeys_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_GetKeys_WithEmpty(t *testing.T) {
-	original := NewHashMap(map[Element]Element{})
+	original := NewHashMap(map[Element]Element{}, WithIntegerKeyMetadata, WithStringValueMetadata)
 	keys, err := original.GetKeys()
 	if err != nil {
 		t.Fatalf("Got error '%s'\n", err)
@@ -464,7 +464,7 @@ func Test_Hashmap_GetKeys_WithContents(t *testing.T) {
 		IntElement(1): StringElement("a"),
 		IntElement(2): StringElement("b"),
 	}
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithIntegerKeyMetadata, WithStringValueMetadata)
 	keys, err := original.GetKeys()
 	if err != nil {
 		t.Fatalf("Got error '%s'\n", err)
