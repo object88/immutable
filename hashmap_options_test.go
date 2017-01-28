@@ -29,15 +29,15 @@ func Test_HashMapOptions_WithBucketStrategy(t *testing.T) {
 }
 
 func Test_HashmapOptions_CreateHashmapWithOptions(t *testing.T) {
-	original := NewHashMap(IntKeyMetadata{}, map[Key]Value{}, WithBucketStrategy(memory.ExtraLargeBlock))
+	original := NewHashMap(map[Key]Value{}, WithBucketStrategy(memory.ExtraLargeBlock))
 	if original.options.BucketStrategy != memory.ExtraLargeBlock {
 		t.Fatalf("Option function did not set bucket strategy; got %s, expected %s\n", original.options.BucketStrategy, memory.ExtraLargeBlock)
 	}
 }
 
 func Test_HashmapOptions_SharedInternally(t *testing.T) {
-	original := NewHashMap(IntKeyMetadata{}, map[Key]Value{IntKey(1): "a"})
-	modified, _ := original.Insert(IntKey(2), "b")
+	original := NewHashMap(map[Key]Value{IntKey(1): StringValue("a")})
+	modified, _ := original.Insert(IntKey(2), StringValue("b"))
 
 	if modified.options != original.options {
 		t.Fatalf("Created new options object from mutating function\n")

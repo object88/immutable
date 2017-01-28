@@ -1,6 +1,9 @@
 package immutable
 
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // FilterPredicate describes the predicate function used by the Filter method
 type FilterPredicate func(key Key, value Value) (bool, error)
@@ -10,19 +13,17 @@ type ForEachPredicate func(key Key, value Value)
 
 // Key is a key
 type Key interface {
-	fmt.Stringer
+	Value
 
 	// Hash calculates the 64-bit hash value for a Key
 	Hash(seed uint32) uint64
 }
 
-type KeyMetadata interface {
-	// Indirect indicates whether the key should be stored as a pointer
-	Indirect() bool
+// Hydrater converts a raw uin64 to a Value
+type Hydrater func(raw unsafe.Pointer) (result Value, err error)
 
-	// StorageSize returns the number of bytes required to store the key
-	StorageSize() int
-}
+// Dehydrater converts a Value into a raw uint64
+type Dehydrater func(value Value) (result unsafe.Pointer, err error)
 
 // MapPredicate describes the predicate function used by the Map method
 type MapPredicate func(key Key, value Value) (Value, error)
@@ -31,9 +32,18 @@ type MapPredicate func(key Key, value Value) (Value, error)
 type ReducePredicate func(accumulator Value, key Key, value Value) (Value, error)
 
 // Value is a value
-type Value interface{}
+type Value interface {
+	fmt.Stringer
+}
 
 type keyValuePair struct {
 	key   Key
 	value Value
+}
+
+type BucketGenerator func(count int) SubBucket
+
+type SubBucket interface {
+	Hydrate(index int) (value Value)
+	Dehydrate(index int, value Value)
 }

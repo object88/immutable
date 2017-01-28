@@ -13,11 +13,33 @@ func WithBucketStrategy(blocksize memory.BlockSize) HashMapOption {
 	}
 }
 
+// WithIntegerKeyMetadata establishes the hydrator and dehydrator methods
+// for working with integer keys.
+func WithIntegerKeyMetadata(o *HashMapOptions) {
+	// o.KeyDehydrater = DehydrateIntKey
+	// o.KeyDirect = true
+	// o.KeyHydrater = HydrateIntKey
+	o.KeyHandler = NewIntHandler()
+}
+
+func WithStringValueMetadata(o *HashMapOptions) {
+	// o.ValueDehydrater = DehydrateString
+	o.ValueHandler = NewStringHandler()
+}
+
 // HashMapOptions contains the options which select the strategies used by
 // a hash map for memory allocation.  Do not instantiate this directly; use
 // the NewHashMapOptions function instead.
 type HashMapOptions struct {
 	BucketStrategy memory.BlockSize
+	KeyHandler     BucketGenerator
+	ValueHandler   BucketGenerator
+	// KeyDirect       bool
+	// KeyDehydrater   Dehydrater
+	// KeyHydrater     Hydrater
+	// ValueDirect     bool
+	// ValueDehydrater Dehydrater
+	// ValueHydrater   Hydrater
 }
 
 func defaultHashMapOptions() *HashMapOptions {

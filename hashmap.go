@@ -2,10 +2,10 @@ package immutable
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
-	"unsafe"
 
 	"github.com/object88/immutable/memory"
 )
@@ -13,13 +13,13 @@ import (
 type bucket struct {
 	entryCount byte
 	hobs       memory.Memories
-	entries    memory.Memories
+	keys       SubBucket
+	values     SubBucket
 	overflow   *bucket
 }
 
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
-	meta    KeyMetadata
 	options *HashMapOptions
 	size    int
 	buckets []*bucket
@@ -34,13 +34,13 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(meta KeyMetadata, contents map[Key]Value, options ...HashMapOption) *HashMap {
+func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
 	opts := defaultHashMapOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
 
-	hash := createHashMap(len(contents), meta, opts)
+	hash := createHashMap(len(contents), opts)
 
 	for k, v := range contents {
 		hash.internalSet(k, v)
@@ -77,20 +77,24 @@ func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
 	// 	maskedHash)
 
 	for b != nil {
-		for index := uint64(0); index < totalEntries; index++ {
-			// fmt.Printf(
-			// 	"0x%016x <-> 0x%016x :: %s <-> %s\n",
-			// 	b.hobs.Read(index),
-			// 	maskedHash,
-			// 	b.entries[index].key, key)
-			if b.hobs.Read(index) != maskedHash {
+		for index := 0; index < int(totalEntries); index++ {
+			if b.hobs.Read(uint64(index)) != maskedHash {
 				continue
 			}
 
-			i := 2 * index
-			if b.entries.Read(i) == key {
-				v := *unsafe.Pointer(uintptr(b.entries.Read(i + 1)))
-				return v.(interface{}), true, nil
+			k, ok := b.keys.Hydrate(index).(Key)
+			if !ok {
+				panic("NOPE")
+			}
+			// fmt.Printf(
+			// 	"0x%016x <-> 0x%016x :: %#v <-> %s\n",
+			// 	b.hobs.Read(uint64(index)),
+			// 	maskedHash,
+			// 	k, key)
+			if k == key {
+				v := b.values.Hydrate(index)
+
+				return v, true, nil
 			}
 		}
 		b = b.overflow
@@ -117,8 +121,9 @@ func (h *HashMap) GetKeys() (results []Key, err error) {
 		if b == nil {
 			continue
 		}
-		for j := byte(0); j < b.entryCount; j++ {
-			results[count] = b.entries[j].key
+		for j := 0; j < int(b.entryCount); j++ {
+			v, _ := b.keys.Hydrate(j).(Key)
+			results[count] = v.(Key)
 			count++
 		}
 	}
@@ -134,9 +139,13 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 		for i := 0; i < len(h.buckets); i++ {
 			b := h.buckets[i]
 			for b != nil {
-				for j := byte(0); j < b.entryCount; j++ {
+				for j := 0; j < int(b.entryCount); j++ {
+					k, _ := b.keys.Hydrate(j).(Key)
+					v := b.values.Hydrate(j)
+					fmt.Printf("<-- %s\n", v)
+
 					select {
-					case ch <- keyValuePair{b.entries[j].key, b.entries[j].value}:
+					case ch <- keyValuePair{k.(Key), v}:
 					case <-abort:
 						return
 					}
@@ -181,7 +190,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	}
 
 	if h.size == 0 {
-		result := createHashMap(1, h.meta, h.options)
+		result := createHashMap(1, h.options)
 		result.internalSet(key, value)
 		return result, nil
 	}
@@ -196,7 +205,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
-		result = createHashMap(size, h.meta, h.options)
+		result = createHashMap(size, h.options)
 		for kvp := range h.iterate(abort) {
 			insertValue := kvp.value
 			if kvp.key == key {
@@ -206,7 +215,7 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 		}
 	} else {
 		size++
-		result = createHashMap(size, h.meta, h.options)
+		result = createHashMap(size, h.options)
 		for kvp := range h.iterate(abort) {
 			result.internalSet(kvp.key, kvp.value)
 		}
@@ -259,10 +268,10 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 	size := h.Size() - 1
 	if size == 0 {
-		return createHashMap(0, h.meta, h.options), nil
+		return createHashMap(0, h.options), nil
 	}
 
-	result := createHashMap(size, h.meta, h.options)
+	result := createHashMap(size, h.options)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
 		if kvp.key != key {
@@ -282,7 +291,7 @@ func (h *HashMap) Size() int {
 }
 
 func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
-	hash := createHashMap(size, h.meta, h.options)
+	hash := createHashMap(size, h.options)
 
 	for _, v := range contents {
 		if v != nil {
@@ -301,24 +310,23 @@ func (h *HashMap) internalSet(key Key, value Value) {
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		// Create the bucket.
-		b = createEmptyBucket(h.options.BucketStrategy, hobSize)
+		b = createEmptyBucket(h.options, hobSize)
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
-			b.overflow = createEmptyBucket(h.options.BucketStrategy, hobSize)
+			b.overflow = createEmptyBucket(h.options, hobSize)
 		}
 		b = b.overflow
 	}
-	i := uint64(2 * b.entryCount)
-	b.entries.Assign(i, key)
-	b.entries.Assign(i+1, uint64(uintptr(unsafe.Pointer(&value))))
-	// b.entries[b.entryCount] = keyValuePair{key, value}
+	index := int(b.entryCount)
+	b.keys.Dehydrate(index, key)
+	b.values.Dehydrate(index, value)
 	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
 }
 
-func createHashMap(size int, meta KeyMetadata, options *HashMapOptions) *HashMap {
+func createHashMap(size int, options *HashMapOptions) *HashMap {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
@@ -329,14 +337,26 @@ func createHashMap(size int, meta KeyMetadata, options *HashMapOptions) *HashMap
 	random := rand.New(src)
 	seed := uint32(random.Int31())
 
-	return &HashMap{meta, options, initialCount, buckets, lobMask, lobSize, seed}
+	return &HashMap{options, initialCount, buckets, lobMask, lobSize, seed}
 }
 
-func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
+func createEmptyBucket(options *HashMapOptions, hobSize uint32) *bucket {
+	// var keys, values valueInterface
+	// if options.KeyDirect {
+	// 	keys = NewDirect(8, bucketCapacity)
+	// } else {
+	// 	keys = NewIndirect(bucketCapacity)
+	// }
+	// if options.ValueDirect {
+	// 	values = NewDirect(8, bucketCapacity)
+	// } else {
+	// 	values = NewIndirect(bucketCapacity)
+	// }
 	return &bucket{
 		entryCount: 0,
-		hobs:       memory.AllocateMemories(blockSize, hobSize, bucketCapacity),
-		entries:    memory.AllocateMemories(memory.NoPacking, 0, 2*bucketCapacity),
+		hobs:       memory.AllocateMemories(options.BucketStrategy, hobSize, bucketCapacity),
+		keys:       options.KeyHandler(bucketCapacity),
+		values:     options.ValueHandler(bucketCapacity),
 		overflow:   nil,
 	}
 }

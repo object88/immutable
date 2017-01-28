@@ -10,28 +10,30 @@ import (
 // hash keys, all entries will end up in one or two buckets.  With a
 // sufficiently large dataset, this will cause bucket overflow to be used.
 
-type MyBadKey struct {
-	value int
+type MyBadKey int
+
+func WithMyBadKeyMetadata(o *HashMapOptions) {
+	o.KeyHandler = NewIntHandler()
 }
 
 func (k MyBadKey) Hash(seed uint32) uint64 {
-	if k.value%2 == 0 {
+	if k%2 == 0 {
 		return 0x0
 	}
 	return 0xffffffffffffffff
 }
 
 func (k MyBadKey) String() string {
-	return fmt.Sprintf("%d", k.value)
+	return fmt.Sprintf("%d", k)
 }
 
 func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
-	max := 100
+	max := 1 // 00
 	data := make(map[Key]Value, max)
 	for i := 0; i < max; i++ {
-		data[MyBadKey{i}] = false
+		data[MyBadKey(i)] = BoolValue(false)
 	}
-	original := NewHashMap(data)
+	original := NewHashMap(data, WithMyBadKeyMetadata)
 	if original == nil {
 		t.Fatal("NewHashMap returned nil\n")
 	}
@@ -40,14 +42,14 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
 	original.ForEach(func(k Key, v Value) {
-		if v.(bool) {
+		if v.(BoolValue) {
 			t.Fatalf("At %s, already visited\n", k)
 		}
-		data[k] = true
+		data[k] = BoolValue(true)
 	})
 
 	for k, v := range data {
-		if !v.(bool) {
+		if !v.(BoolValue) {
 			t.Fatalf("At %s, not visited\n", k)
 		}
 	}
@@ -63,15 +65,15 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	max := 100
 	contents := make(map[Key]Value, max)
 	for i := 0; i < max; i++ {
-		contents[MyBadKey{i}] = MyIntValue(i)
+		contents[MyBadKey(i)] = MyIntValue(i)
 	}
 
-	original := NewHashMap(contents)
+	original := NewHashMap(contents, WithMyBadKeyMetadata)
 
 	for k, v := range contents {
 		result, _, _ := original.Get(k)
 		if result != v {
-			t.Fatalf("At %s, expected %d, got %d\n%#v", k, v, result, original)
+			t.Fatalf("At %s, expected %s, got %s\n%#v", k, v, result, original)
 		}
 	}
 }
