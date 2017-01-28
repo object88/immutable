@@ -10,7 +10,7 @@ import (
 func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 	var original *immutable.HashMap
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
 		invokeCount++
 		return acc.(int) + v.(int), nil
 	}, 0)
@@ -26,10 +26,10 @@ func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{}
+	contents := map[immutable.Element]immutable.Element{}
 	original := immutable.NewHashMap(contents)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
 		invokeCount++
 		return acc.(int) + v.(int), nil
 	}, 0)
@@ -45,14 +45,14 @@ func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithContents(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[immutable.Element]immutable.Element{
+		immutable.IntElement(1): 1,
+		immutable.IntElement(2): 2,
+		immutable.IntElement(3): 3,
 	}
 	original := immutable.NewHashMap(contents)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
 		invokeCount++
 		return acc.(int) + v.(int), nil
 	}, 0)
@@ -68,14 +68,14 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[immutable.Element]immutable.Element{
+		immutable.IntElement(1): 1,
+		immutable.IntElement(2): 2,
+		immutable.IntElement(3): 3,
 	}
 	original := immutable.NewHashMap(contents)
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
-		if k.(immutable.IntKey)%2 == 0 {
+	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
+		if k.(immutable.IntElement)%2 == 0 {
 			return nil, errors.New("Found an even key")
 		}
 		return acc.(int) + v.(int), nil

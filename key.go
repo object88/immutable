@@ -6,14 +6,11 @@ import (
 	"github.com/object88/immutable/hasher"
 )
 
-// IntKey is an integer-based Key
-type IntKey int
-
-// StringKey is a string-based Key
-type StringKey string
+// IntElement is an integer-based Element
+type IntElement int
 
 // // Hash calculates the 32-bit hash
-// func (k IntKey) Hash() uint32 {
+// func (k IntElement) Hash() uint32 {
 // 	hasher := fnv.New32a()
 //
 // 	binary.Write(hasher, binary.LittleEndian, uint32(k))
@@ -22,35 +19,19 @@ type StringKey string
 // }
 
 // Hash does what Hash cannot.
-func (k IntKey) Hash(seed uint32) uint64 {
+func (k IntElement) Hash(seed uint32) uint64 {
 	return hasher.Hash8(uintptr(k), seed)
 }
 
-// // DehydrateIntKey takes an IntValue and returns a uint64
-// func DehydrateIntKey(value Value) (result unsafe.Pointer, err error) {
-// 	fmt.Printf("D: %#v\n", value.(IntKey))
-// 	fmt.Printf("D: %d\n", int(value.(IntKey)))
-// 	i := int(value.(IntKey))
-// 	return unsafe.Pointer(&i), nil
-// }
-//
-// // HydrateIntKey takes a uint64 and returns an IntValue
-// func HydrateIntKey(value unsafe.Pointer) (result Value, err error) {
-// 	fmt.Printf("H: %p\n", value)
-// 	fmt.Printf("H: %p\n", (*int)(value))
-// 	fmt.Printf("H: %d\n", *(*int)(value))
-// 	return IntKey(*(*int)(value)), nil
-// }
-
-func (k IntKey) String() string {
+func (k IntElement) String() string {
 	return fmt.Sprintf("%d", int(k))
 }
 
 // Hash calculates the 32-bit hash
-func (k StringKey) Hash() uint32 {
+func (k StringElement) Hash(seed uint32) uint64 {
 	return 0
 }
 
-func (k StringKey) String() string {
+func (k StringElement) String() string {
 	return string(k)
 }

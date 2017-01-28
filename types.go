@@ -6,44 +6,49 @@ import (
 )
 
 // FilterPredicate describes the predicate function used by the Filter method
-type FilterPredicate func(key Key, value Value) (bool, error)
+type FilterPredicate func(key Element, value Element) (bool, error)
 
 // ForEachPredicate describes the predicate function used by the ForEach method
-type ForEachPredicate func(key Key, value Value)
+type ForEachPredicate func(key Element, value Element)
 
-// Key is a key
-type Key interface {
-	Value
-
-	// Hash calculates the 64-bit hash value for a Key
+type Element interface {
+	fmt.Stringer
 	Hash(seed uint32) uint64
 }
 
-// Hydrater converts a raw uin64 to a Value
-type Hydrater func(raw unsafe.Pointer) (result Value, err error)
+// // Element is a key
+// type Element interface {
+// 	Element
+//
+// 	// Hash calculates the 64-bit hash value for a Element
+// 	Hash(seed uint32) uint64
+// }
 
-// Dehydrater converts a Value into a raw uint64
-type Dehydrater func(value Value) (result unsafe.Pointer, err error)
+// Hydrater converts a raw uin64 to a Element
+type Hydrater func(raw unsafe.Pointer) (result Element, err error)
+
+// Dehydrater converts a Element into a raw uint64
+type Dehydrater func(value Element) (result unsafe.Pointer, err error)
 
 // MapPredicate describes the predicate function used by the Map method
-type MapPredicate func(key Key, value Value) (Value, error)
+type MapPredicate func(key Element, value Element) (Element, error)
 
 // ReducePredicate describes the predicate function used by the Reduce method
-type ReducePredicate func(accumulator Value, key Key, value Value) (Value, error)
+type ReducePredicate func(accumulator Element, key Element, value Element) (Element, error)
 
-// Value is a value
-type Value interface {
-	fmt.Stringer
-}
+// // Element is a value
+// type Element interface {
+// 	fmt.Stringer
+// }
 
 type keyValuePair struct {
-	key   Key
-	value Value
+	key   Element
+	value Element
 }
 
 type BucketGenerator func(count int) SubBucket
 
 type SubBucket interface {
-	Hydrate(index int) (value Value)
-	Dehydrate(index int, value Value)
+	Hydrate(index int) (e Element)
+	Dehydrate(index int, e Element)
 }

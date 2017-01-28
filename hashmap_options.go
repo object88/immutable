@@ -16,14 +16,10 @@ func WithBucketStrategy(blocksize memory.BlockSize) HashMapOption {
 // WithIntegerKeyMetadata establishes the hydrator and dehydrator methods
 // for working with integer keys.
 func WithIntegerKeyMetadata(o *HashMapOptions) {
-	// o.KeyDehydrater = DehydrateIntKey
-	// o.KeyDirect = true
-	// o.KeyHydrater = HydrateIntKey
 	o.KeyHandler = NewIntHandler()
 }
 
 func WithStringValueMetadata(o *HashMapOptions) {
-	// o.ValueDehydrater = DehydrateString
 	o.ValueHandler = NewStringHandler()
 }
 
@@ -34,12 +30,6 @@ type HashMapOptions struct {
 	BucketStrategy memory.BlockSize
 	KeyHandler     BucketGenerator
 	ValueHandler   BucketGenerator
-	// KeyDirect       bool
-	// KeyDehydrater   Dehydrater
-	// KeyHydrater     Hydrater
-	// ValueDirect     bool
-	// ValueDehydrater Dehydrater
-	// ValueHydrater   Hydrater
 }
 
 func defaultHashMapOptions() *HashMapOptions {

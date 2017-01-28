@@ -10,7 +10,7 @@ import (
 func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 	var original *immutable.HashMap
 	invokeCount := 0
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	modified, err := original.Map(func(k immutable.Element, v immutable.Element) (immutable.Element, error) {
 		invokeCount++
 		return v.(int) * 2, nil
 	})
@@ -26,10 +26,10 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithEmpty(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{}
+	contents := map[immutable.Element]immutable.Element{}
 	original := immutable.NewHashMap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	modified, err := original.Map(func(k immutable.Element, v immutable.Element) (immutable.Element, error) {
 		invokeCount++
 		return v.(int) * 2, nil
 	})
@@ -45,14 +45,14 @@ func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithContents(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[immutable.Element]immutable.Element{
+		immutable.IntElement(1): 1,
+		immutable.IntElement(2): 2,
+		immutable.IntElement(3): 3,
 	}
 	original := immutable.NewHashMap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	modified, err := original.Map(func(k immutable.Element, v immutable.Element) (immutable.Element, error) {
 		invokeCount++
 		return v.(int) * 2, nil
 	})
@@ -72,14 +72,14 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithCancel(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[immutable.Element]immutable.Element{
+		immutable.IntElement(1): 1,
+		immutable.IntElement(2): 2,
+		immutable.IntElement(3): 3,
 	}
 	original := immutable.NewHashMap(contents)
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
-		if k.(immutable.IntKey)%2 == 0 {
+	modified, err := original.Map(func(k immutable.Element, v immutable.Element) (immutable.Element, error) {
+		if k.(immutable.IntElement)%2 == 0 {
 			return nil, errors.New("Found an even key")
 		}
 		return v.(int) * 2, nil

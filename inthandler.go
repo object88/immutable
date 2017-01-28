@@ -15,14 +15,14 @@ func NewIntSubBucket(count int) SubBucket {
 	return &IntSubBucket{m}
 }
 
-func (h *IntSubBucket) Hydrate(index int) Value {
+func (h *IntSubBucket) Hydrate(index int) Element {
 	u := h.m.Read(uint64(index))
-	v := IntKey(u)
+	v := IntElement(u)
 	return v
 }
 
-func (h *IntSubBucket) Dehydrate(index int, v Value) {
-	u := v.(IntKey)
+func (h *IntSubBucket) Dehydrate(index int, v Element) {
+	u := v.(IntElement)
 	// u := *(*int)(unsafe.Pointer(&v))
 	h.m.Assign(uint64(index), uint64(u))
 }

@@ -2,7 +2,6 @@ package immutable
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -34,7 +33,7 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
+func NewHashMap(contents map[Element]Element, options ...HashMapOption) *HashMap {
 	opts := defaultHashMapOptions()
 	for _, fn := range options {
 		fn(opts)
@@ -50,12 +49,12 @@ func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
+func (h *HashMap) Get(key Element) (result Element, ok bool, err error) {
 	if h == nil {
 		return nil, false, errors.New("Pointer receiver is nil")
 	}
 	if key == nil {
-		return nil, false, errors.New("Key is nil")
+		return nil, false, errors.New("Element is nil")
 	}
 	if h.size == 0 {
 		return nil, false, nil
@@ -82,7 +81,7 @@ func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
 				continue
 			}
 
-			k, ok := b.keys.Hydrate(index).(Key)
+			k, ok := b.keys.Hydrate(index).(Element)
 			if !ok {
 				panic("NOPE")
 			}
@@ -105,16 +104,16 @@ func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
 // GetKeys returns an array of keys in the hashmap.  If there are no entries,
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
-func (h *HashMap) GetKeys() (results []Key, err error) {
+func (h *HashMap) GetKeys() (results []Element, err error) {
 	if h == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
 
 	if h.size == 0 {
-		return []Key{}, nil
+		return []Element{}, nil
 	}
 
-	results = make([]Key, h.size)
+	results = make([]Element, h.size)
 	count := 0
 	for i := 0; i < len(h.buckets); i++ {
 		b := h.buckets[i]
@@ -122,8 +121,8 @@ func (h *HashMap) GetKeys() (results []Key, err error) {
 			continue
 		}
 		for j := 0; j < int(b.entryCount); j++ {
-			v, _ := b.keys.Hydrate(j).(Key)
-			results[count] = v.(Key)
+			v, _ := b.keys.Hydrate(j).(Element)
+			results[count] = v.(Element)
 			count++
 		}
 	}
@@ -140,12 +139,11 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 			b := h.buckets[i]
 			for b != nil {
 				for j := 0; j < int(b.entryCount); j++ {
-					k, _ := b.keys.Hydrate(j).(Key)
+					k, _ := b.keys.Hydrate(j).(Element)
 					v := b.values.Hydrate(j)
-					fmt.Printf("<-- %s\n", v)
 
 					select {
-					case ch <- keyValuePair{k.(Key), v}:
+					case ch <- keyValuePair{k, v}:
 					case <-abort:
 						return
 					}
@@ -181,12 +179,12 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // Insert returns a new collection with the provided key-value pair added.
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
-func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
+func (h *HashMap) Insert(key Element, value Element) (*HashMap, error) {
 	if h == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
 	if key == nil {
-		return nil, errors.New("Key is nil")
+		return nil, errors.New("Element is nil")
 	}
 
 	if h.size == 0 {
@@ -242,7 +240,7 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
+func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Element) (Element, error) {
 	if h == nil {
 		return nil, nil
 	}
@@ -253,7 +251,7 @@ func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, e
 
 // Remove returns a copy of the provided HashMap with the specified element
 // removed.
-func (h *HashMap) Remove(key Key) (*HashMap, error) {
+func (h *HashMap) Remove(key Element) (*HashMap, error) {
 	if h == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
@@ -302,7 +300,7 @@ func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
 	return &BaseStruct{hash}
 }
 
-func (h *HashMap) internalSet(key Key, value Value) {
+func (h *HashMap) internalSet(key Element, value Element) {
 	hobSize := uint32(64 - h.lobSize)
 
 	hashkey := key.Hash(h.seed)

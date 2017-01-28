@@ -1,4 +1,4 @@
-package immutable
+package benchmark
 
 import (
 	"math/rand"
@@ -17,19 +17,19 @@ const (
 	max             = 500000
 )
 
-var keys []immutable.IntKey
-var contents map[immutable.Key]immutable.Value
+var keys []int
+var contents map[int]string
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-var hashmapSmallBlock, hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.HashMap
+var hashmapSmallBlock, hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.IntToStringHashmap
 
 func init() {
 	stringLength := 100
-	contents = make(map[immutable.Key]immutable.Value, max)
-	keys = make([]immutable.IntKey, max)
+	contents = make(map[int]string, max)
+	keys = make([]int, max)
 	for i := 0; i < max; i++ {
-		keys[i] = immutable.IntKey(i)
+		keys[i] = i
 		contents[keys[i]] = generateString(stringLength)
 	}
 	hashmapSmallBlock = createWithStragety(memory.SmallBlock)
@@ -66,33 +66,22 @@ func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var r string
 		for _, key := range keys {
-			r = getStringFromMap(key)
+			r = contents[key]
 		}
 		result = r
 	}
 }
 
-func getStringFromMap(key immutable.Key) string {
-	s := contents[key].(string)
-	return s
+func createWithStragety(blocksize memory.BlockSize) *immutable.IntToStringHashmap {
+	return immutable.NewIntToStringHashmap(contents)
 }
 
-func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
-	return immutable.NewHashMap(contents, immutable.WithBucketStrategy(blocksize))
-}
-
-func testStrategy(original *immutable.HashMap) {
+func testStrategy(original *immutable.IntToStringHashmap) {
 	var r string
 	for _, key := range keys {
-		r = getStringFromImmutable(original, key)
+		r = original.Get(key)
 	}
 	result = r
-}
-
-func getStringFromImmutable(original *immutable.HashMap, key immutable.Key) string {
-	r, _, _ := original.Get(key)
-	s := r.(string)
-	return s
 }
 
 // This code copied directly from StackOverflow; see randStringBytesMaskImprSrc

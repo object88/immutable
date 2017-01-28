@@ -26,7 +26,7 @@ func (h *HashMap) GoString() string {
 		buffer.WriteString("    entries: [\n")
 		for b != nil {
 			for i := 0; i < int(b.entryCount); i++ {
-				k, _ := b.keys.Hydrate(i).(Key)
+				k, _ := b.keys.Hydrate(i).(Element)
 				v := b.values.Hydrate(i)
 				buffer.WriteString(fmt.Sprintf("      [0x%016x,%s] -> %s\n", b.hobs.Read(uint64(i)), k, v))
 			}

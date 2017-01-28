@@ -15,15 +15,15 @@ func NewStringSubBucket(count int) SubBucket {
 	return &StringSubBucket{m}
 }
 
-func (h *StringSubBucket) Hydrate(index int) Value {
+func (h *StringSubBucket) Hydrate(index int) Element {
 	u := h.m[index]
 	s := *(*string)(u)
-	v := StringValue(s)
+	v := StringElement(s)
 	return v
 }
 
-func (h *StringSubBucket) Dehydrate(index int, v Value) {
-	v1 := v.(StringValue)
+func (h *StringSubBucket) Dehydrate(index int, v Element) {
+	v1 := v.(StringElement)
 	u := unsafe.Pointer(&v1)
 	h.m[index] = u
 }

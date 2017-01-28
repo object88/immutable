@@ -10,7 +10,7 @@ The hashmap is a key-value pair collection based on Go's native map implementati
 
 ### Methods
 
-#### `Get(key Key) (result Value, ok bool, err error)`
+#### `Get(key Element) (result Element, ok bool, err error)`
 
 The get method searches the collection for a key-value pair with the matching key, and returns the value.
 
@@ -20,17 +20,17 @@ If there is no matching key, then `result` is nil, `ok` is `false`, and `err` is
 
 If the key matches in the hash map, a valid value is returned (including `nil`), and `ok` is `true`.
 
-#### `GetKeys() (results []Key, err error)`
+#### `GetKeys() (results []Element, err error)`
 
-The `GetKeys` method returns the collection of `Key` objects used to store values in the hashmap.  If the hashmap is unassigned, `err` is non-`nil`, and if the hashmap does not have any contents, then a 0-length array is returned.
+The `GetKeys` method returns the collection of `Element` objects used to store values in the hashmap.  If the hashmap is unassigned, `err` is non-`nil`, and if the hashmap does not have any contents, then a 0-length array is returned.
 
 It is important to note that, just as the collection functions do not operate in any order, the `GetKeys` method will return the key collection in random order.
 
-#### `Insert(key Key, value Value) (*HashMap, error)`
+#### `Insert(key Element, value Element) (*HashMap, error)`
 
 The insert method creates a copy of the provided hashmap collection with the provided key-value pair added.  The `key` may not be `nil`, but `value` may.
 
-#### `Remove(key Key) (*HashMap, error)`
+#### `Remove(key Element) (*HashMap, error)`
 
 The remove method creates a copy of the provided hashmap collection, with the entry at the specified key removed.  If the method would result in no change, the same reference is returned.
 

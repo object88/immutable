@@ -12,10 +12,6 @@ import (
 
 type MyBadKey int
 
-func WithMyBadKeyMetadata(o *HashMapOptions) {
-	o.KeyHandler = NewIntHandler()
-}
-
 func (k MyBadKey) Hash(seed uint32) uint64 {
 	if k%2 == 0 {
 		return 0x0
@@ -27,11 +23,40 @@ func (k MyBadKey) String() string {
 	return fmt.Sprintf("%d", k)
 }
 
+func WithMyBadKeyMetadata(o *HashMapOptions) {
+	o.KeyHandler = NewMyBadElementHashHandler()
+	o.ValueHandler = NewIntHandler()
+}
+
+type MyBadElementSubBucket struct {
+	m []int
+}
+
+func NewMyBadElementHashHandler() BucketGenerator {
+	return NewMyBadElementSubBucket
+}
+
+func NewMyBadElementSubBucket(count int) SubBucket {
+	m := make([]int, count)
+	return &MyBadElementSubBucket{m}
+}
+
+func (b *MyBadElementSubBucket) Hydrate(index int) Element {
+	u := b.m[index]
+	v := MyBadKey(u)
+	return v
+}
+
+func (b *MyBadElementSubBucket) Dehydrate(index int, v Element) {
+	u := v.(MyBadKey)
+	b.m[index] = int(u)
+}
+
 func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
-	max := 1 // 00
-	data := make(map[Key]Value, max)
+	max := 100
+	data := make(map[Element]Element, max)
 	for i := 0; i < max; i++ {
-		data[MyBadKey(i)] = BoolValue(false)
+		data[MyBadKey(i)] = IntElement(0)
 	}
 	original := NewHashMap(data, WithMyBadKeyMetadata)
 	if original == nil {
@@ -41,31 +66,25 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	if size != len(data) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
-	original.ForEach(func(k Key, v Value) {
-		if v.(BoolValue) {
+	original.ForEach(func(k Element, v Element) {
+		if v.(IntElement) == 1 {
 			t.Fatalf("At %s, already visited\n", k)
 		}
-		data[k] = BoolValue(true)
+		data[k] = IntElement(1)
 	})
 
 	for k, v := range data {
-		if !v.(BoolValue) {
+		if v.(IntElement) != 1 {
 			t.Fatalf("At %s, not visited\n", k)
 		}
 	}
 }
 
-type MyIntValue int
-
-func (v MyIntValue) String() string {
-	return fmt.Sprintf("%d", v)
-}
-
 func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	max := 100
-	contents := make(map[Key]Value, max)
+	contents := make(map[Element]Element, max)
 	for i := 0; i < max; i++ {
-		contents[MyBadKey(i)] = MyIntValue(i)
+		contents[MyBadKey(i)] = IntElement(i)
 	}
 
 	original := NewHashMap(contents, WithMyBadKeyMetadata)

@@ -2,10 +2,10 @@ package immutable
 
 // Base describes the low-level set of functions
 type Base interface {
-	// Get(key Key) (result Value, ok bool)
+	// Get(key Element) (result Element, ok bool)
 	Size() int
 	instantiate(initialSize int, contents []*keyValuePair) *BaseStruct
-	internalSet(key Key, value Value)
+	internalSet(key Element, value Element)
 	iterate(abort <-chan struct{}) <-chan keyValuePair
 }
 
@@ -60,7 +60,7 @@ func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
 	return mutated, nil
 }
 
-func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
+func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator Element) (Element, error) {
 	acc := accumulator
 	var err error
 	abort := make(chan struct{})
