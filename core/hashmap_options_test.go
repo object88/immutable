@@ -1,13 +1,15 @@
-package immutable
+package core
 
 import (
 	"testing"
 
+	"github.com/object88/immutable/handlers/integers"
+	"github.com/object88/immutable/handlers/strings"
 	"github.com/object88/immutable/memory"
 )
 
 func Test_HashMapOptions_Defaults(t *testing.T) {
-	options := defaultHashMapOptions()
+	options := DefaultHashMapOptions()
 	if options == nil {
 		t.Fatalf("Default method returned nil\n")
 	}
@@ -17,7 +19,7 @@ func Test_HashMapOptions_Defaults(t *testing.T) {
 }
 
 func Test_HashMapOptions_WithBucketStrategy(t *testing.T) {
-	options := defaultHashMapOptions()
+	options := DefaultHashMapOptions()
 	f := WithBucketStrategy(memory.ExtraLargeBlock)
 	if nil == f {
 		t.Fatalf("Fn returned from WithBucketStrategy is nil\n")
@@ -36,8 +38,8 @@ func Test_HashmapOptions_CreateHashmapWithOptions(t *testing.T) {
 }
 
 func Test_HashmapOptions_SharedInternally(t *testing.T) {
-	original := NewHashMap(map[Element]Element{IntElement(1): StringElement("a")}, WithIntegerKeyMetadata, WithStringValueMetadata)
-	modified, _ := original.Insert(IntElement(2), StringElement("b"))
+	original := NewHashMap(map[Element]Element{integers.IntElement(1): strings.StringElement("a")}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
+	modified, _ := original.Insert(integers.IntElement(2), strings.StringElement("b"))
 
 	if modified.options != original.options {
 		t.Fatalf("Created new options object from mutating function\n")
