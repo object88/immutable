@@ -3,6 +3,8 @@ package hasher
 import (
 	"math/rand"
 	"time"
+
+	"github.com/OneOfOne/xxhash"
 )
 
 const m1 = 194865226553
@@ -31,6 +33,10 @@ func Hash8(p uintptr, seed uint32) uint64 {
 	h ^= (k1 & 0xffffffff00000000) << 32
 	h = rotl31(h*m1) * m2
 	return h
+}
+
+func HashString(s string, seed uint32) uint64 {
+	return xxhash.ChecksumString64S(s, uint64(seed))
 }
 
 func rotl31(x uint64) uint64 {

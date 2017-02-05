@@ -5,14 +5,16 @@ import (
 	"testing"
 
 	"github.com/object88/immutable"
+	"github.com/object88/immutable/core"
+	"github.com/object88/immutable/handlers/integers"
 )
 
 func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 	var original *immutable.HashMap
 	invokeCount := 0
-	modified, err := original.Filter(func(k immutable.Element, v immutable.Element) (bool, error) {
+	modified, err := original.Filter(func(k core.Element, v core.Element) (bool, error) {
 		invokeCount++
-		return v.(int)%2 == 0, nil
+		return int(v.(integers.IntElement))%2 == 0, nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -26,12 +28,12 @@ func Test_Hashmap_Filter_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Filter_WithEmpty(t *testing.T) {
-	contents := map[immutable.Element]immutable.Element{}
-	original := immutable.NewHashMap(contents)
+	contents := map[core.Element]core.Element{}
+	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
 	invokeCount := 0
-	modified, err := original.Filter(func(k immutable.Element, v immutable.Element) (bool, error) {
+	modified, err := original.Filter(func(k core.Element, v core.Element) (bool, error) {
 		invokeCount++
-		return v.(int)%2 == 0, nil
+		return int(v.(integers.IntElement))%2 == 0, nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -45,16 +47,16 @@ func Test_Hashmap_Filter_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Filter_WithContents(t *testing.T) {
-	contents := map[immutable.Element]immutable.Element{
-		immutable.IntElement(1): 1,
-		immutable.IntElement(2): 2,
-		immutable.IntElement(3): 3,
+	contents := map[core.Element]core.Element{
+		integers.IntElement(1): integers.IntElement(1),
+		integers.IntElement(2): integers.IntElement(2),
+		integers.IntElement(3): integers.IntElement(3),
 	}
-	original := immutable.NewHashMap(contents)
+	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
 	invokeCount := 0
-	modified, err := original.Filter(func(k immutable.Element, v immutable.Element) (bool, error) {
+	modified, err := original.Filter(func(k core.Element, v core.Element) (bool, error) {
 		invokeCount++
-		return v.(int)%2 == 0, nil
+		return int(v.(integers.IntElement))%2 == 0, nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -63,8 +65,8 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 	if size != 1 {
 		t.Fatalf("Incorrect number of elements in new collection; expected 1, got %d\n", size)
 	}
-	value, _, _ := modified.Get(immutable.IntElement(2))
-	if value == nil || value.(int) != 2 {
+	value, _, _ := modified.Get(integers.IntElement(2))
+	if value == nil || int(value.(integers.IntElement)) != 2 {
 		t.Fatalf("Incorrect contents of new collection:\n%s\n", modified)
 	}
 	if invokeCount != 3 {
@@ -73,17 +75,17 @@ func Test_Hashmap_Filter_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Filter_WithCancel(t *testing.T) {
-	contents := map[immutable.Element]immutable.Element{
-		immutable.IntElement(1): 1,
-		immutable.IntElement(2): 2,
-		immutable.IntElement(3): 3,
+	contents := map[core.Element]core.Element{
+		integers.IntElement(1): integers.IntElement(1),
+		integers.IntElement(2): integers.IntElement(2),
+		integers.IntElement(3): integers.IntElement(3),
 	}
-	original := immutable.NewHashMap(contents)
-	modified, err := original.Filter(func(k immutable.Element, v immutable.Element) (bool, error) {
-		if k.(immutable.IntElement)%2 == 0 {
+	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
+	modified, err := original.Filter(func(k core.Element, v core.Element) (bool, error) {
+		if k.(integers.IntElement)%2 == 0 {
 			return false, errors.New("Found an even key")
 		}
-		return v.(int)%2 == 0, nil
+		return int(v.(integers.IntElement))%2 == 0, nil
 	})
 	if err == nil {
 		t.Fatalf("Failed to return error")

@@ -1,19 +1,21 @@
-package immutable
+package immutable_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/object88/immutable"
+	"github.com/object88/immutable/core"
+	"github.com/object88/immutable/handlers/integers"
 )
 
 func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 	var original *immutable.HashMap
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
+	sum, err := original.Reduce(func(acc core.Element, k core.Element, v core.Element) (core.Element, error) {
 		invokeCount++
-		return acc.(int) + v.(int), nil
-	}, 0)
+		return integers.IntElement(int(acc.(integers.IntElement)) + int(v.(integers.IntElement))), nil
+	}, integers.IntElement(0))
 	if err != nil {
 		t.Error(err)
 	}
@@ -26,17 +28,17 @@ func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
-	contents := map[immutable.Element]immutable.Element{}
-	original := immutable.NewHashMap(contents)
+	contents := map[core.Element]core.Element{}
+	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
+	sum, err := original.Reduce(func(acc core.Element, k core.Element, v core.Element) (core.Element, error) {
 		invokeCount++
-		return acc.(int) + v.(int), nil
-	}, 0)
+		return integers.IntElement(int(acc.(integers.IntElement)) + int(v.(integers.IntElement))), nil
+	}, integers.IntElement(0))
 	if err != nil {
 		t.Error(err)
 	}
-	if sum != 0 {
+	if int(sum.(integers.IntElement)) != 0 {
 		t.Fatal("Did not return initial accumulator")
 	}
 	if invokeCount != 0 {
@@ -45,21 +47,21 @@ func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithContents(t *testing.T) {
-	contents := map[immutable.Element]immutable.Element{
-		immutable.IntElement(1): 1,
-		immutable.IntElement(2): 2,
-		immutable.IntElement(3): 3,
+	contents := map[core.Element]core.Element{
+		integers.IntElement(1): integers.IntElement(1),
+		integers.IntElement(2): integers.IntElement(2),
+		integers.IntElement(3): integers.IntElement(3),
 	}
-	original := immutable.NewHashMap(contents)
+	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
+	sum, err := original.Reduce(func(acc core.Element, k core.Element, v core.Element) (core.Element, error) {
 		invokeCount++
-		return acc.(int) + v.(int), nil
-	}, 0)
+		return integers.IntElement(int(acc.(integers.IntElement)) + int(v.(integers.IntElement))), nil
+	}, integers.IntElement(0))
 	if err != nil {
 		t.Error(err)
 	}
-	if sum != 6 {
+	if int(sum.(integers.IntElement)) != 6 {
 		t.Fatal("Did not return expected accumulator")
 	}
 	if invokeCount != 3 {
@@ -68,18 +70,18 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
-	contents := map[immutable.Element]immutable.Element{
-		immutable.IntElement(1): 1,
-		immutable.IntElement(2): 2,
-		immutable.IntElement(3): 3,
+	contents := map[core.Element]core.Element{
+		integers.IntElement(1): integers.IntElement(1),
+		integers.IntElement(2): integers.IntElement(2),
+		integers.IntElement(3): integers.IntElement(3),
 	}
-	original := immutable.NewHashMap(contents)
-	sum, err := original.Reduce(func(acc immutable.Element, k immutable.Element, v immutable.Element) (immutable.Element, error) {
-		if k.(immutable.IntElement)%2 == 0 {
+	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
+	sum, err := original.Reduce(func(acc core.Element, k core.Element, v core.Element) (core.Element, error) {
+		if k.(integers.IntElement)%2 == 0 {
 			return nil, errors.New("Found an even key")
 		}
-		return acc.(int) + v.(int), nil
-	}, 0)
+		return integers.IntElement(int(acc.(integers.IntElement)) + int(v.(integers.IntElement))), nil
+	}, integers.IntElement(0))
 	if err == nil {
 		t.Fatalf("Failed to return error")
 	}

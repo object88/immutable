@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/object88/immutable/core"
+	"github.com/object88/immutable/hasher"
 )
 
 var config *core.HandlerConfig
@@ -13,7 +14,7 @@ var once sync.Once
 type StringElement string
 
 func (e StringElement) Hash(seed uint32) (hash uint64) {
-	return 0
+	return hasher.HashString(string(e), seed)
 }
 
 func (e StringElement) String() string {
@@ -33,9 +34,6 @@ func WithStringValueMetadata(o *core.HashMapOptions) {
 func createOneStringHandler() *core.HandlerConfig {
 	once.Do(func() {
 		config = &core.HandlerConfig{
-			// CalculateHash: func(source core.Element, seed uint32) (hash uint64) {
-			// 	return 0
-			// },
 			Compare: func(a, b core.Element) (match bool) {
 				return false
 			},
