@@ -35,7 +35,7 @@ func createOneStringHandler() *core.HandlerConfig {
 	once.Do(func() {
 		config = &core.HandlerConfig{
 			Compare: func(a, b core.Element) (match bool) {
-				return false
+				return string(a.(StringElement)) == string(b.(StringElement))
 			},
 			CreateBucket: func(count int) core.SubBucket {
 				m := make([]string, count)

@@ -166,7 +166,7 @@ func Test_Hashmap_Insert_NilKey(t *testing.T) {
 
 func Test_Hashmap_Insert_NilValue(t *testing.T) {
 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}
-	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
+	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
 	modified, err := original.Insert(integers.IntElement(2), nil)
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -206,7 +206,7 @@ func Test_Hashmap_Insert_WithSameKey(t *testing.T) {
 
 func Test_Hashmap_Insert_NilValue_WithSameKey(t *testing.T) {
 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a"), integers.IntElement(2): strings.StringElement("b")}
-	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
+	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
 	modified, err := original.Insert(integers.IntElement(1), nil)
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -233,6 +233,15 @@ func Test_Hashmap_Insert_WithSameKeyAndSameValue(t *testing.T) {
 	}
 	if original != modified {
 		t.Fatalf("Hash map returned from insert is not same hash map\n")
+	}
+}
+
+func Test_Hashmap_Insert_SharesOptions(t *testing.T) {
+	original := NewHashMap(map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
+	modified, _ := original.Insert(integers.IntElement(2), strings.StringElement("b"))
+
+	if modified.options != original.options {
+		t.Fatalf("Created new options object from mutating function\n")
 	}
 }
 
