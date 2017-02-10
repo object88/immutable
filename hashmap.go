@@ -309,15 +309,11 @@ func (h *HashMap) internalSet(key unsafe.Pointer, value unsafe.Pointer) {
 	if b == nil {
 		// Create the bucket.
 		b = createEmptyBucket(h.options, hobSize)
-		if b.entryCount >= bucketCapacity {
-			fmt.Printf("Created bucket #%d with entry count %d\n", selectedBucket, b.entryCount)
-		}
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
 			b.overflow = createEmptyBucket(h.options, hobSize)
-			fmt.Printf("Adding overflow bucket #%d with entry count %d\n", selectedBucket, b.overflow.entryCount)
 		}
 		b = b.overflow
 	}

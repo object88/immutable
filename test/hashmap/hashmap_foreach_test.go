@@ -4,31 +4,28 @@ import (
 	"testing"
 
 	"github.com/object88/immutable"
-	"github.com/object88/immutable/core"
-	"github.com/object88/immutable/handlers/booleans"
-	"github.com/object88/immutable/handlers/integers"
 )
 
 func Test_Hashmap_ForEach(t *testing.T) {
-	data := map[core.Element]core.Element{
-		integers.IntElement(0): booleans.BoolElement(false),
-		integers.IntElement(1): booleans.BoolElement(false),
-		integers.IntElement(2): booleans.BoolElement(false),
-		integers.IntElement(3): booleans.BoolElement(false),
+	contents := map[int]string{
+		0: "false",
+		1: "false",
+		2: "false",
+		3: "false",
 	}
-	original := immutable.NewHashMap(data, integers.WithIntKeyMetadata, booleans.WithBoolValueMetadata)
+	original := immutable.NewIntToStringHashmap(contents)
 	if original == nil {
 		t.Fatal("Failed to create hashmap")
 	}
-	original.ForEach(func(k core.Element, v core.Element) {
-		if bool(v.(booleans.BoolElement)) {
+	original.ForEach(func(k int, v string) {
+		if contents[k] == "true" {
 			t.Fatalf("At %s, already visited\n", k)
 		}
-		data[k] = booleans.BoolElement(true)
+		contents[k] = "true"
 	})
 
-	for k, v := range data {
-		if !bool(v.(booleans.BoolElement)) {
+	for k, v := range contents {
+		if v != "true" {
 			t.Fatalf("At %s, not visited\n", k)
 		}
 	}

@@ -2,22 +2,21 @@ package immutable_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/object88/immutable"
-	"github.com/object88/immutable/core"
-	"github.com/object88/immutable/handlers/integers"
 )
 
 func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
-	var original *immutable.HashMap
+	var original *immutable.IntToStringHashmap
 	invokeCount := 0
-	modified, err := original.Map(func(k core.Element, v core.Element) (core.Element, error) {
+	modified, err := original.Map(func(k int, v string) (string, error) {
 		invokeCount++
-		return integers.IntElement(int(v.(integers.IntElement)) * 2), nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
-	if err != nil {
-		t.Error(err)
+	if err == nil {
+		t.Error("No error returned")
 	}
 	if modified != nil {
 		t.Fatal("Did not return nil")
@@ -28,12 +27,12 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithEmpty(t *testing.T) {
-	contents := map[core.Element]core.Element{}
-	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
+	contents := map[int]string{}
+	original := immutable.NewIntToStringHashmap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k core.Element, v core.Element) (core.Element, error) {
+	modified, err := original.Map(func(k int, v string) (string, error) {
 		invokeCount++
-		return integers.IntElement(int(v.(integers.IntElement)) * 2), nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -47,25 +46,25 @@ func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithContents(t *testing.T) {
-	contents := map[core.Element]core.Element{
-		integers.IntElement(1): integers.IntElement(1),
-		integers.IntElement(2): integers.IntElement(2),
-		integers.IntElement(3): integers.IntElement(3),
+	contents := map[int]string{
+		1: "1",
+		2: "2",
+		3: "3",
 	}
-	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
+	original := immutable.NewIntToStringHashmap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k core.Element, v core.Element) (core.Element, error) {
+	modified, err := original.Map(func(k int, v string) (string, error) {
 		invokeCount++
-		return integers.IntElement(int(v.(integers.IntElement)) * 2), nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
 	if err != nil {
 		t.Error(err)
 	}
 	for k, v := range contents {
-		result, _, _ := modified.Get(k)
-		expected := int(v.(integers.IntElement)) * 2
-		if int(result.(integers.IntElement)) != expected {
-			t.Fatalf("At %s, got incorrect result, expected %d, got %s\n", k, expected, result)
+		result := modified.Get(k)
+		expected := fmt.Sprintf("%s%s", v)
+		if result != expected {
+			t.Fatalf("At %s, got incorrect result, expected %s, got %s\n", k, expected, result)
 		}
 	}
 	if invokeCount != 3 {
@@ -74,17 +73,17 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithCancel(t *testing.T) {
-	contents := map[core.Element]core.Element{
-		integers.IntElement(1): integers.IntElement(1),
-		integers.IntElement(2): integers.IntElement(2),
-		integers.IntElement(3): integers.IntElement(3),
+	contents := map[int]string{
+		1: "1",
+		2: "2",
+		3: "3",
 	}
-	original := immutable.NewHashMap(contents, integers.WithIntKeyMetadata, integers.WithIntValueMetadata)
-	modified, err := original.Map(func(k core.Element, v core.Element) (core.Element, error) {
-		if k.(integers.IntElement)%2 == 0 {
-			return nil, errors.New("Found an even key")
+	original := immutable.NewIntToStringHashmap(contents)
+	modified, err := original.Map(func(k int, v string) (string, error) {
+		if k%2 == 0 {
+			return "", errors.New("Found an even key")
 		}
-		return integers.IntElement(int(v.(integers.IntElement)) * 2), nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
 	if err == nil {
 		t.Fatalf("Failed to return error")
