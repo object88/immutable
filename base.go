@@ -1,13 +1,17 @@
 package immutable
 
-import "github.com/object88/immutable/core"
+import (
+	"unsafe"
+
+	"github.com/object88/immutable/core"
+)
 
 // Base describes the low-level set of functions
 type Base interface {
 	// Get(key Element) (result Element, ok bool)
 	Size() int
 	instantiate(initialSize int, contents []*core.KeyValuePair) *BaseStruct
-	internalSet(key core.Element, value core.Element)
+	internalSet(key unsafe.Pointer, value unsafe.Pointer)
 	iterate(abort <-chan struct{}) <-chan core.KeyValuePair
 }
 
@@ -62,7 +66,7 @@ func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
 	return mutated, nil
 }
 
-func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator core.Element) (core.Element, error) {
+func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	acc := accumulator
 	var err error
 	abort := make(chan struct{})

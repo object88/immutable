@@ -2,6 +2,7 @@ package strings
 
 import (
 	"sync"
+	"unsafe"
 
 	"github.com/object88/immutable/core"
 	"github.com/object88/immutable/hasher"
@@ -10,51 +11,76 @@ import (
 var config *core.HandlerConfig
 var once sync.Once
 
-// StringElement is a string.
-type StringElement string
-
-func (e StringElement) Hash(seed uint32) (hash uint64) {
-	return hasher.HashString(string(e), seed)
-}
-
-func (e StringElement) String() string {
-	return string(e)
-}
-
 // WithStringKeyMetadata establishes the hydrator and dehydrator methods
 // for working with integer keys.
 func WithStringKeyMetadata(o *core.HashMapOptions) {
-	o.KeyConfig = createOneStringHandler()
+	var hc StringHandlerConfig
+	o.KeyConfig = hc
 }
 
 func WithStringValueMetadata(o *core.HashMapOptions) {
-	o.ValueConfig = createOneStringHandler()
+	var hc StringHandlerConfig
+	o.ValueConfig = hc
 }
 
-func createOneStringHandler() *core.HandlerConfig {
-	once.Do(func() {
-		config = &core.HandlerConfig{
-			Compare: func(a, b core.Element) (match bool) {
-				return string(a.(StringElement)) == string(b.(StringElement))
-			},
-			CreateBucket: func(count int) core.SubBucket {
-				m := make([]string, count)
-				return &StringSubBucket{m}
-			},
-		}
-	})
-	return config
+type StringHandlerConfig struct{}
+
+func (shc StringHandlerConfig) CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool) {
+	// return (*(*[]string)(memory))[index] == *(*string)(other)
+	u := shc.Read(memory, index)
+	return *(*string)(u) == *(*string)(other)
 }
 
-type StringSubBucket struct {
-	m []string
+func (StringHandlerConfig) CreateBucket(count int) unsafe.Pointer {
+	m := make([]unsafe.Pointer, count)
+	return unsafe.Pointer(&m)
 }
 
-func (h *StringSubBucket) Dehydrate(index int, value core.Element) {
-	s := value.(StringElement)
-	h.m[index] = string(s)
+func (StringHandlerConfig) Hash(element unsafe.Pointer, seed uint32) uint64 {
+	s := *(*string)(element)
+	return hasher.HashString(s, seed)
 }
 
-func (h *StringSubBucket) Hydrate(index int) core.Element {
-	return StringElement(h.m[index])
+func (StringHandlerConfig) Read(memory unsafe.Pointer, index int) (result unsafe.Pointer) {
+	// s := (*(*[]string)(memory))[index]
+	// return unsafe.Pointer(&s)
+	m := *(*[]unsafe.Pointer)(memory)
+	return m[index]
 }
+
+func (StringHandlerConfig) Format(memory unsafe.Pointer) string {
+	return *(*string)(memory)
+}
+
+func (StringHandlerConfig) Write(memory unsafe.Pointer, index int, value unsafe.Pointer) {
+	// (*(*[]string)(memory))[index] = *(*string)(value)
+	m := *(*[]unsafe.Pointer)(memory)
+	m[index] = value
+}
+
+// func (StringHandlerConfig) CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool) {
+// 	return (*(*[]string)(memory))[index] == *(*string)(other)
+// }
+//
+// func (StringHandlerConfig) CreateBucket(count int) unsafe.Pointer {
+// 	m := make([]string, count)
+// 	return unsafe.Pointer(&m)
+// }
+//
+// func (StringHandlerConfig) Hash(element unsafe.Pointer, seed uint32) uint64 {
+// 	s := *(*string)(element)
+// 	return hasher.HashString(s, seed)
+// }
+//
+// func (StringHandlerConfig) Read(memory unsafe.Pointer, index int) (result unsafe.Pointer) {
+// 	s := (*(*[]string)(memory))[index]
+// 	return unsafe.Pointer(&s)
+// }
+//
+// func (StringHandlerConfig) Format(memory unsafe.Pointer) string {
+// 	return *(*string)(memory)
+// }
+//
+// func (StringHandlerConfig) Write(memory unsafe.Pointer, index int, value unsafe.Pointer) {
+// 	(*(*[]string)(memory))[index] = *(*string)(value)
+// }

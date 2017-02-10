@@ -2,9 +2,11 @@ package immutable
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
+	"unsafe"
 
 	"github.com/object88/immutable/core"
 	"github.com/object88/immutable/memory"
@@ -13,8 +15,8 @@ import (
 type bucket struct {
 	entryCount byte
 	hobs       memory.Memories
-	keys       core.SubBucket
-	values     core.SubBucket
+	keys       unsafe.Pointer
+	values     unsafe.Pointer
 	overflow   *bucket
 }
 
@@ -34,7 +36,7 @@ const (
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[core.Element]core.Element, options ...core.HashMapOption) *HashMap {
+func NewHashMap(contents map[unsafe.Pointer]unsafe.Pointer, options ...core.HashMapOption) *HashMap {
 	opts := core.DefaultHashMapOptions()
 	for _, fn := range options {
 		fn(opts)
@@ -50,7 +52,7 @@ func NewHashMap(contents map[core.Element]core.Element, options ...core.HashMapO
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(key core.Element) (result core.Element, ok bool, err error) {
+func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
 	if h == nil {
 		return nil, false, errors.New("Pointer receiver is nil")
 	}
@@ -61,7 +63,7 @@ func (h *HashMap) Get(key core.Element) (result core.Element, ok bool, err error
 		return nil, false, nil
 	}
 
-	hashkey := key.Hash(h.seed)
+	hashkey := h.options.KeyConfig.Hash(key, h.seed)
 
 	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
@@ -82,39 +84,36 @@ func (h *HashMap) Get(key core.Element) (result core.Element, ok bool, err error
 				continue
 			}
 
-			k, ok := b.keys.Hydrate(index).(core.Element)
-			if !ok {
-				panic("NOPE")
-			}
 			// fmt.Printf(
 			// 	"0x%016x <-> 0x%016x :: %#v <-> %s\n",
 			// 	b.hobs.Read(uint64(index)),
 			// 	maskedHash,
 			// 	k, key)
-			if k == key {
-				v := b.values.Hydrate(index)
+			if h.options.KeyConfig.CompareTo(b.keys, index, key) {
+				v := h.options.ValueConfig.Read(b.values, index)
 
 				return v, true, nil
 			}
 		}
 		b = b.overflow
 	}
+	fmt.Printf("Failed to find match\n")
 	return nil, false, nil
 }
 
 // GetKeys returns an array of keys in the hashmap.  If there are no entries,
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
-func (h *HashMap) GetKeys() (results []core.Element, err error) {
+func (h *HashMap) GetKeys() (results []unsafe.Pointer, err error) {
 	if h == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
 
 	if h.size == 0 {
-		return []core.Element{}, nil
+		return []unsafe.Pointer{}, nil
 	}
 
-	results = make([]core.Element, h.size)
+	results = make([]unsafe.Pointer, h.size)
 	count := 0
 	for i := 0; i < len(h.buckets); i++ {
 		b := h.buckets[i]
@@ -122,8 +121,8 @@ func (h *HashMap) GetKeys() (results []core.Element, err error) {
 			continue
 		}
 		for j := 0; j < int(b.entryCount); j++ {
-			v, _ := b.keys.Hydrate(j).(core.Element)
-			results[count] = v.(core.Element)
+			v := h.options.ValueConfig.Read(b.values, j)
+			results[count] = v
 			count++
 		}
 	}
@@ -140,8 +139,8 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan core.KeyValuePair {
 			b := h.buckets[i]
 			for b != nil {
 				for j := 0; j < int(b.entryCount); j++ {
-					k, _ := b.keys.Hydrate(j).(core.Element)
-					v := b.values.Hydrate(j)
+					k := h.options.KeyConfig.Read(b.keys, j)
+					v := h.options.ValueConfig.Read(b.values, j)
 
 					select {
 					case ch <- core.KeyValuePair{Key: k, Value: v}:
@@ -180,7 +179,7 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // Insert returns a new collection with the provided key-value pair added.
 // The pointer reciever may be nil; it will be treated as a instance with
 // no contents.
-func (h *HashMap) Insert(key core.Element, value core.Element) (*HashMap, error) {
+func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
 	if h == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
@@ -241,7 +240,7 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *HashMap) Reduce(predicate ReducePredicate, accumulator core.Element) (core.Element, error) {
+func (h *HashMap) Reduce(predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	if h == nil {
 		return nil, nil
 	}
@@ -252,7 +251,7 @@ func (h *HashMap) Reduce(predicate ReducePredicate, accumulator core.Element) (c
 
 // Remove returns a copy of the provided HashMap with the specified element
 // removed.
-func (h *HashMap) Remove(key core.Element) (*HashMap, error) {
+func (h *HashMap) Remove(key unsafe.Pointer) (*HashMap, error) {
 	if h == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
@@ -301,26 +300,30 @@ func (h *HashMap) instantiate(size int, contents []*core.KeyValuePair) *BaseStru
 	return &BaseStruct{hash}
 }
 
-func (h *HashMap) internalSet(key core.Element, value core.Element) {
+func (h *HashMap) internalSet(key unsafe.Pointer, value unsafe.Pointer) {
 	hobSize := uint32(64 - h.lobSize)
 
-	hashkey := key.Hash(h.seed)
+	hashkey := h.options.KeyConfig.Hash(key, h.seed)
 	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		// Create the bucket.
 		b = createEmptyBucket(h.options, hobSize)
+		if b.entryCount >= bucketCapacity {
+			fmt.Printf("Created bucket #%d with entry count %d\n", selectedBucket, b.entryCount)
+		}
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
 			b.overflow = createEmptyBucket(h.options, hobSize)
+			fmt.Printf("Adding overflow bucket #%d with entry count %d\n", selectedBucket, b.overflow.entryCount)
 		}
 		b = b.overflow
 	}
 	index := int(b.entryCount)
-	b.keys.Dehydrate(index, key)
-	b.values.Dehydrate(index, value)
+	h.options.KeyConfig.Write(b.keys, index, key)
+	h.options.ValueConfig.Write(b.values, index, value)
 	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
 }
@@ -340,17 +343,6 @@ func createHashMap(size int, options *core.HashMapOptions) *HashMap {
 }
 
 func createEmptyBucket(options *core.HashMapOptions, hobSize uint32) *bucket {
-	// var keys, values valueInterface
-	// if options.KeyDirect {
-	// 	keys = NewDirect(8, bucketCapacity)
-	// } else {
-	// 	keys = NewIndirect(bucketCapacity)
-	// }
-	// if options.ValueDirect {
-	// 	values = NewDirect(8, bucketCapacity)
-	// } else {
-	// 	values = NewIndirect(bucketCapacity)
-	// }
 	return &bucket{
 		entryCount: 0,
 		hobs:       memory.AllocateMemories(options.BucketStrategy, hobSize, bucketCapacity),

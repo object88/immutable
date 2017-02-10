@@ -1,26 +1,17 @@
 package core
 
-import "fmt"
+import "unsafe"
 
-type BucketGenerator func(count int) SubBucket
-
-// Element may be a key or a value
-type Element interface {
-	fmt.Stringer
-	Hash(seed uint32) uint64
-}
-
-type HandlerConfig struct {
-	Compare      func(a, b Element) (match bool)
-	CreateBucket func(count int) SubBucket
+type HandlerConfig interface {
+	CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool)
+	CreateBucket(count int) unsafe.Pointer
+	Hash(element unsafe.Pointer, seed uint32) uint64
+	Read(memory unsafe.Pointer, index int) (result unsafe.Pointer)
+	Format(value unsafe.Pointer) string
+	Write(memory unsafe.Pointer, index int, value unsafe.Pointer)
 }
 
 type KeyValuePair struct {
-	Key   Element
-	Value Element
-}
-
-type SubBucket interface {
-	Hydrate(index int) (e Element)
-	Dehydrate(index int, e Element)
+	Key   unsafe.Pointer
+	Value unsafe.Pointer
 }

@@ -18,8 +18,8 @@ func WithBucketStrategy(blocksize memory.BlockSize) HashMapOption {
 // the NewHashMapOptions function instead.
 type HashMapOptions struct {
 	BucketStrategy memory.BlockSize
-	KeyConfig      *HandlerConfig
-	ValueConfig    *HandlerConfig
+	KeyConfig      HandlerConfig
+	ValueConfig    HandlerConfig
 }
 
 func DefaultHashMapOptions() *HashMapOptions {

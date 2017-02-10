@@ -3,8 +3,7 @@ package immutable
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/object88/immutable/core"
+	"unsafe"
 )
 
 func (h *HashMap) String() string {
@@ -13,11 +12,14 @@ func (h *HashMap) String() string {
 	}
 
 	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("Size: %d\n", h.size))
-	buffer.WriteString(fmt.Sprintf("[\n"))
-	h.ForEach(func(k core.Element, v core.Element) {
-		buffer.WriteString(fmt.Sprintf("  %s: %s\n", k, v))
+	buffer.WriteString("Size: ")
+	buffer.WriteString(fmt.Sprintf("%d", h.size))
+	buffer.WriteString("\n[\n")
+	h.ForEach(func(k unsafe.Pointer, v unsafe.Pointer) {
+		ks := h.options.KeyConfig.Format(k)
+		vs := h.options.ValueConfig.Format(v)
+		buffer.WriteString(fmt.Sprintf("  %s: %s\n", ks, vs))
 	})
-	buffer.WriteString(fmt.Sprintf("]\n"))
+	buffer.WriteString("]\n")
 	return buffer.String()
 }

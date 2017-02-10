@@ -22,12 +22,9 @@ func init() {
 }
 
 // Hash8 calculates the hash for an 8-byte (64-bit) value
-func Hash8(p uintptr, seed uint32) uint64 {
-	// This feels bad; uintptr is the size required to hold a pointer, which
-	// will be different on 32-bit and 64-bit architectures.  May need to revisit
-	// this.  Perhaps simply accept uint64.
+func Hash8(p uint64, seed uint32) uint64 {
 	// k1 := uint64(*(*byte)(unsafe.Pointer(p)))
-	k1 := uint64(p)
+	k1 := p
 	h := uint64(uintptr(seed) + 8*hashkey[0])
 	h ^= (k1 & 0xffffffff)
 	h ^= (k1 & 0xffffffff00000000) << 32
