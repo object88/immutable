@@ -73,8 +73,8 @@ func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 }
 
 func getStringFromMap(key immutable.Key) string {
-	r := contents[key].(string)
-	return r
+	s := contents[key].(string)
+	return s
 }
 
 func createWithStragety(blocksize memory.BlockSize) *immutable.HashMap {
@@ -90,8 +90,9 @@ func testStrategy(original *immutable.HashMap) {
 }
 
 func getStringFromImmutable(original *immutable.HashMap, key immutable.Key) string {
-	r, _, _ := original.Get(key).(string)
-	return r
+	r, _, _ := original.Get(key)
+	s := r.(string)
+	return s
 }
 
 // This code copied directly from StackOverflow; see randStringBytesMaskImprSrc
