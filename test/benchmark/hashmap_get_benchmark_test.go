@@ -73,7 +73,7 @@ func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
 }
 
 func getStringFromMap(key immutable.Key) string {
-	r = contents[key].(string)
+	r := contents[key].(string)
 	return r
 }
 
@@ -90,7 +90,7 @@ func testStrategy(original *immutable.HashMap) {
 }
 
 func getStringFromImmutable(original *immutable.HashMap, key immutable.Key) string {
-	r, _, _ = original.Get(key).(string)
+	r, _, _ := original.Get(key).(string)
 	return r
 }
 
