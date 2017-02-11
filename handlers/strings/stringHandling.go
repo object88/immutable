@@ -25,6 +25,10 @@ func WithStringValueMetadata(o *core.HashMapOptions) {
 
 type StringHandlerConfig struct{}
 
+func (StringHandlerConfig) Compare(a, b unsafe.Pointer) (match bool) {
+	return *(*string)(a) == *(*string)(b)
+}
+
 func (shc StringHandlerConfig) CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool) {
 	// return (*(*[]string)(memory))[index] == *(*string)(other)
 	u := shc.Read(memory, index)

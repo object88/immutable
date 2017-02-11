@@ -90,7 +90,7 @@ func testStrategy(original *immutable.IntToStringHashmap) {
 }
 
 func getStringFromImmutable(original *immutable.IntToStringHashmap, key int) string {
-	s := original.Get(key)
+	s, _, _ := original.Get(key)
 	return s
 }
 

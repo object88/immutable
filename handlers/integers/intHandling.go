@@ -26,6 +26,10 @@ func WithIntValueMetadata(o *core.HashMapOptions) {
 
 type IntHandlerConfig struct{}
 
+func (IntHandlerConfig) Compare(a, b unsafe.Pointer) (match bool) {
+	return *(*int)(a) == *(*int)(b)
+}
+
 func (IntHandlerConfig) CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool) {
 	return (*(*[]int)(memory))[index] == *(*int)(other)
 }

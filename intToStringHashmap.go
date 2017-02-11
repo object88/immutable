@@ -2,7 +2,6 @@ package immutable
 
 import (
 	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/object88/immutable/core"
@@ -57,17 +56,32 @@ func (hm *IntToStringHashmap) ForEach(predicate func(key int, value string)) {
 	})
 }
 
-func (hm *IntToStringHashmap) Get(key int) string {
+func (hm *IntToStringHashmap) Get(key int) (value string, ok bool, err error) {
 	k := unsafe.Pointer(&key)
 	r, ok, err := hm.h.Get(k)
 	if err != nil {
-		panic("NOPE")
+		return "", false, err
 	}
 	if !ok {
-		fmt.Printf("!ok\n")
+		return "", false, nil
 	}
 	v := *(*string)(r)
-	return v
+	return v, true, nil
+}
+
+func (hm *IntToStringHashmap) Insert(key int, value string) (result *IntToStringHashmap, err error) {
+	if hm == nil {
+		return nil, errors.New("Pointer receiver is nil")
+	}
+	kp, vp := unsafe.Pointer(&key), unsafe.Pointer(&value)
+	newHashmap, err := hm.h.Insert(kp, vp)
+	if err != nil {
+		return nil, err
+	}
+	if newHashmap == hm.h {
+		return hm, nil
+	}
+	return &IntToStringHashmap{newHashmap}, nil
 }
 
 func (hm *IntToStringHashmap) Map(predicate func(key int, value string) (result string, err error)) (*IntToStringHashmap, error) {
@@ -105,6 +119,9 @@ func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(acc
 }
 
 func (hm *IntToStringHashmap) Size() int {
+	if hm == nil {
+		return 0
+	}
 	return hm.h.Size()
 }
 

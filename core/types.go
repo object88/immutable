@@ -3,6 +3,7 @@ package core
 import "unsafe"
 
 type HandlerConfig interface {
+	Compare(a, b unsafe.Pointer) (match bool)
 	CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool)
 	CreateBucket(count int) unsafe.Pointer
 	Hash(element unsafe.Pointer, seed uint32) uint64

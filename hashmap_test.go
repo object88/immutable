@@ -1,11 +1,8 @@
 package immutable
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
-func Test_Hashmap_IntToString(t *testing.T) {
+func Test_Hashmap(t *testing.T) {
 	data := map[int]string{
 		1:  "aa",
 		2:  "bb",
@@ -19,281 +16,208 @@ func Test_Hashmap_IntToString(t *testing.T) {
 	}
 	original := NewIntToStringHashmap(data)
 	if original.Size() != len(data) {
-		t.Fatalf("Incorrect size: %d", original.Size())
+		t.Fatalf("Incorrect size")
 	}
-	fmt.Printf("original:\n%s\n", original)
 	for k, v := range data {
-		result := original.Get(k)
-		// if err != nil {
-		// 	t.Fatalf("Got err %s for key '%s'\n", err.Error(), k)
-		// }
-		// if !ok {
-		// 	t.Fatalf("Got !ok for key '%s'\n", k)
-		// }
+		result, ok, err := original.Get(k)
+		if err != nil {
+			t.Fatalf("Got err %s for key '%d'\n", err.Error(), k)
+		}
+		if !ok {
+			t.Fatalf("Got !ok for key '%d'\n", k)
+		}
 		if result != v {
 			t.Fatalf("Element '%d' -> '%s', expected '%s'\n", k, result, v)
 		}
 	}
 }
 
-// func Test_Hashmap_StringToString(t *testing.T) {
-// 	data := map[string]string{
-// 		"1":  "aa",
-// 		"2":  "bb",
-// 		"3":  "cc",
-// 		"4":  "dd",
-// 		"5":  "ee",
-// 		"6":  "ff",
-// 		"7":  "gg",
-// 		"8":  "hh",
-// 		"26": "zz",
-// 	}
-// 	original := NewStringToStringHashmap(data)
-// 	if original.Size() != len(data) {
-// 		t.Fatalf("Incorrect size: %d", original.Size())
-// 	}
-// 	fmt.Printf("original:\n%s\n", original)
-// 	for k, v := range data {
-// 		result := original.Get(k)
-// 		// if err != nil {
-// 		// 	t.Fatalf("Got err %s for key '%s'\n", err.Error(), k)
-// 		// }
-// 		// if !ok {
-// 		// 	t.Fatalf("Got !ok for key '%s'\n", k)
-// 		// }
-// 		if result != v {
-// 			t.Fatalf("Element '%s' -> '%s', expected '%s'\n", k, result, v)
-// 		}
-// 	}
-// }
+func Test_HashMap_Nil_Size(t *testing.T) {
+	var original *IntToStringHashmap
+	size := original.Size()
+	if 0 != size {
+		t.Fatalf("Expected 0 size, got %d\n", size)
+	}
+}
 
-// func Test_Hashmap(t *testing.T) {
-// 	data := map[core.Element]core.Element{
-// 		integers.IntElement(1):  strings.StringElement("aa"),
-// 		integers.IntElement(2):  strings.StringElement("bb"),
-// 		integers.IntElement(3):  strings.StringElement("cc"),
-// 		integers.IntElement(4):  strings.StringElement("dd"),
-// 		integers.IntElement(5):  strings.StringElement("ee"),
-// 		integers.IntElement(6):  strings.StringElement("ff"),
-// 		integers.IntElement(7):  strings.StringElement("gg"),
-// 		integers.IntElement(8):  strings.StringElement("hh"),
-// 		integers.IntElement(26): strings.StringElement("zz"),
-// 	}
-// 	original := NewHashMap(data, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	if original.Size() != len(data) {
-// 		t.Fatalf("Incorrect size")
-// 	}
-// 	for k, v := range data {
-// 		result, ok, err := original.Get(k)
-// 		if err != nil {
-// 			t.Fatalf("Got err %s for key '%s'\n", err.Error(), k)
-// 		}
-// 		if !ok {
-// 			t.Fatalf("Got !ok for key '%s'\n", k)
-// 		}
-// 		if result != v {
-// 			t.Fatalf("Element '%s' -> '%s', expected '%s'\n", k, result, v)
-// 		}
-// 	}
-// }
-//
-// func Test_Hashmap_Simple(t *testing.T) {
-// 	contents := map[core.Element]core.Element{
-// 		integers.IntElement(1): strings.StringElement("a"),
-// 		integers.IntElement(2): strings.StringElement("b"),
-// 	}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	fmt.Printf("%#v", original)
-// 	for k, v := range contents {
-// 		result, _, _ := original.Get(k)
-// 		if result != v {
-// 			t.Fatalf("Element '%s' -> '%s', expected '%s'\n", k, result, v)
-// 		}
-// 	}
-// }
-//
-// func Test_HashMap_Nil_Size(t *testing.T) {
-// 	var original *HashMap
-// 	size := original.Size()
-// 	if 0 != size {
-// 		t.Fatalf("Expected 0 size, got %d\n", size)
-// 	}
-// }
-//
-// func Test_HashMap_Empty_Create(t *testing.T) {
-// 	original := NewHashMap(map[core.Element]core.Element{}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	if original == nil {
-// 		t.Fatalf("Creating HashMap with empty map returned nil\n")
-// 	}
-// }
-//
-// func Test_HashMap_Empty_Size(t *testing.T) {
-// 	original := NewHashMap(map[core.Element]core.Element{}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	size := original.Size()
-// 	if size != 0 {
-// 		t.Fatalf("Expected 0 size, got %d\n", size)
-// 	}
-// }
-//
-// func Test_Hashmap_Create_WithNilContents(t *testing.T) {
-// 	original := NewHashMap(nil, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	if nil == original {
-// 		t.Fatal("NewHashMap with nil argument returned nil")
-// 	}
-// 	size := original.Size()
-// 	if size != 0 {
-// 		t.Fatalf("Expected 0 size, got %d\n", size)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
-// 	var original *HashMap
-// 	modified, err := original.Insert(integers.IntElement(4), strings.StringElement("d"))
-// 	if err == nil {
-// 		t.Fatal("Insert to nil hashmap did not return error\n")
-// 	}
-// 	if modified != nil {
-// 		t.Fatal("Insert to nil hashmap did not return nil\n")
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_WithEmpty(t *testing.T) {
-// 	original := NewHashMap(map[core.Element]core.Element{}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	key := integers.IntElement(4)
-// 	value := strings.StringElement("d")
-// 	modified, error := original.Insert(key, value)
-// 	if nil != error {
-// 		t.Fatalf("Insert to empty hashmap returned error %s\n", error)
-// 	}
-// 	if nil == modified {
-// 		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
-// 	}
-// 	size := modified.Size()
-// 	if size != 1 {
-// 		t.Fatalf("New hashmap has size %d; expected 1", size)
-// 	}
-// 	returnedValue, _, _ := modified.Get(key)
-// 	if returnedValue != value {
-// 		t.Fatalf("Incorrect value stored in new hashmap; expected %s, got %s\n", value, returnedValue)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_WithContents(t *testing.T) {
-// 	contents := map[core.Element]core.Element{
-// 		integers.IntElement(0): strings.StringElement("a"),
-// 		integers.IntElement(1): strings.StringElement("b"),
-// 		integers.IntElement(2): strings.StringElement("c"),
-// 	}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	key := integers.IntElement(4)
-// 	value := strings.StringElement("d")
-// 	modified, error := original.Insert(key, value)
-// 	if nil != error {
-// 		t.Fatalf("Insert to empty hashmap returned error %s\n", error)
-// 	}
-// 	if nil == modified {
-// 		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
-// 	}
-// 	size := modified.Size()
-// 	if size != len(contents)+1 {
-// 		t.Fatalf("New hashmap has size %d; expected %d", size, len(contents)+1)
-// 	}
-// 	for k, v := range contents {
-// 		result, _, _ := modified.Get(k)
-// 		if result != v {
-// 			t.Fatalf("At %s, incorrect value; expected %s, got %s\n", k, v, result)
-// 		}
-// 	}
-// 	result, _, _ := modified.Get(key)
-// 	if result != value {
-// 		t.Fatalf("At %s, incorrect value; expected %s, got %s\n", key, value, result)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_NilKey(t *testing.T) {
-// 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	modified, err := original.Insert(nil, strings.StringElement("aa"))
-// 	if err == nil {
-// 		t.Fatal("Insert with nil key did not return error")
-// 	}
-// 	if modified != nil {
-// 		t.Fatalf("Insert with nil key returned hashmap %s\n", modified)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_NilValue(t *testing.T) {
-// 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
-// 	modified, err := original.Insert(integers.IntElement(2), nil)
-// 	if err != nil {
-// 		t.Fatalf("Received error during insert: %s\n", err)
-// 	}
-// 	size := modified.Size()
-// 	if size != len(contents)+1 {
-// 		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", size, len(contents)+1)
-// 	}
-// 	result, ok, _ := modified.Get(integers.IntElement(2))
-// 	if !ok {
-// 		t.Fatal("Get returned not-ok")
-// 	}
-// 	if result != nil {
-// 		t.Fatalf("Get returned wrong value; expected nil, got %s\n", result)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_WithSameKey(t *testing.T) {
-// 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a"), integers.IntElement(2): strings.StringElement("b")}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	modified, err := original.Insert(integers.IntElement(1), strings.StringElement("aa"))
-// 	if err != nil {
-// 		t.Fatalf("Received error during insert: %s\n", err)
-// 	}
-// 	if modified == nil {
-// 		t.Fatalf("Received nil from insert\n")
-// 	}
-// 	count := modified.Size()
-// 	if count != len(contents) {
-// 		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", count, len(contents))
-// 	}
-// 	result, _, _ := modified.Get(integers.IntElement(1))
-// 	if result != strings.StringElement("aa") {
-// 		t.Fatalf("Modified hash map has wrong value for key; got %s, expected 'aa'\n", result)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_NilValue_WithSameKey(t *testing.T) {
-// 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a"), integers.IntElement(2): strings.StringElement("b")}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
-// 	modified, err := original.Insert(integers.IntElement(1), nil)
-// 	if err != nil {
-// 		t.Fatalf("Received error during insert: %s\n", err)
-// 	}
-// 	if modified == nil {
-// 		t.Fatalf("Received nil from insert\n")
-// 	}
-// 	count := modified.Size()
-// 	if count != len(contents) {
-// 		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", count, len(contents))
-// 	}
-// 	result, _, _ := modified.Get(integers.IntElement(1))
-// 	if result != nil {
-// 		t.Fatalf("Modified hash map has wrong value for key; got %s, expected 'aa'\n", result)
-// 	}
-// }
-//
-// func Test_Hashmap_Insert_WithSameKeyAndSameValue(t *testing.T) {
-// 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}
-// 	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
-// 	modified, err := original.Insert(integers.IntElement(1), strings.StringElement("a"))
-// 	if err != nil {
-// 		t.Fatalf("Received error during insert: %s\n", err)
-// 	}
-// 	if original != modified {
-// 		t.Fatalf("Hash map returned from insert is not same hash map\n")
-// 	}
-// }
-//
+func Test_HashMap_Empty_Create(t *testing.T) {
+	original := NewIntToStringHashmap(map[int]string{})
+	if original == nil {
+		t.Fatalf("Creating HashMap with empty map returned nil\n")
+	}
+}
+
+func Test_HashMap_Empty_Size(t *testing.T) {
+	original := NewIntToStringHashmap(map[int]string{})
+	size := original.Size()
+	if size != 0 {
+		t.Fatalf("Expected 0 size, got %d\n", size)
+	}
+}
+
+func Test_Hashmap_Create_WithNilContents(t *testing.T) {
+	original := NewIntToStringHashmap(nil)
+	if nil == original {
+		t.Fatal("NewHashMap with nil argument returned nil")
+	}
+	size := original.Size()
+	if size != 0 {
+		t.Fatalf("Expected 0 size, got %d\n", size)
+	}
+}
+
+func Test_Hashmap_Insert_WithUnassigned(t *testing.T) {
+	var original *IntToStringHashmap
+	modified, err := original.Insert(4, "d")
+	if err == nil {
+		t.Fatal("Insert to nil hashmap did not return error\n")
+	}
+	if modified != nil {
+		t.Fatal("Insert to nil hashmap did not return nil\n")
+	}
+}
+
+func Test_Hashmap_Insert_WithEmpty(t *testing.T) {
+	original := NewIntToStringHashmap(map[int]string{})
+	key := 4
+	value := "d"
+	modified, error := original.Insert(key, value)
+	if nil != error {
+		t.Fatalf("Insert to empty hashmap returned error %s\n", error)
+	}
+	if nil == modified {
+		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
+	}
+	size := modified.Size()
+	if size != 1 {
+		t.Fatalf("New hashmap has size %d; expected 1", size)
+	}
+	returnedValue, _, _ := modified.Get(key)
+	if returnedValue != value {
+		t.Fatalf("Incorrect value stored in new hashmap; expected %s, got %s\n", value, returnedValue)
+	}
+}
+
+func Test_Hashmap_Insert_WithContents(t *testing.T) {
+	contents := map[int]string{
+		0: "a",
+		1: "b",
+		2: "c",
+	}
+	original := NewIntToStringHashmap(contents)
+	key := 4
+	value := "d"
+	modified, error := original.Insert(key, value)
+	if nil != error {
+		t.Fatalf("Insert to empty hashmap returned error %s\n", error)
+	}
+	if nil == modified {
+		t.Fatal("Insert to empty hashmap did not create a new hashmap\n")
+	}
+	size := modified.Size()
+	if size != len(contents)+1 {
+		t.Fatalf("New hashmap has size %d; expected %d", size, len(contents)+1)
+	}
+	for k, v := range contents {
+		result, _, _ := modified.Get(k)
+		if result != v {
+			t.Fatalf("At %d, incorrect value; expected %s, got %s\n", k, v, result)
+		}
+	}
+	result, _, _ := modified.Get(key)
+	if result != value {
+		t.Fatalf("At %d, incorrect value; expected %s, got %s\n", key, value, result)
+	}
+}
+
+/*
+func Test_Hashmap_Insert_NilKey(t *testing.T) {
+	contents := map[int]string{1: "a"}
+	original := NewIntToStringHashmap(contents)
+	modified, err := original.Insert(nil, "aa")
+	if err == nil {
+		t.Fatal("Insert with nil key did not return error")
+	}
+	if modified != nil {
+		t.Fatalf("Insert with nil key returned hashmap %s\n", modified)
+	}
+}
+
+func Test_Hashmap_Insert_NilValue(t *testing.T) {
+	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}
+	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
+	modified, err := original.Insert(integers.IntElement(2), nil)
+	if err != nil {
+		t.Fatalf("Received error during insert: %s\n", err)
+	}
+	size := modified.Size()
+	if size != len(contents)+1 {
+		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", size, len(contents)+1)
+	}
+	result, ok, _ := modified.Get(integers.IntElement(2))
+	if !ok {
+		t.Fatal("Get returned not-ok")
+	}
+	if result != nil {
+		t.Fatalf("Get returned wrong value; expected nil, got %s\n", result)
+	}
+}
+*/
+
+func Test_Hashmap_Insert_WithSameKey(t *testing.T) {
+	contents := map[int]string{1: "a", 2: "b"}
+	original := NewIntToStringHashmap(contents)
+	modified, err := original.Insert(1, "aa")
+	if err != nil {
+		t.Fatalf("Received error during insert: %s\n", err)
+	}
+	if modified == nil {
+		t.Fatal("Received nil from insert\n")
+	}
+	count := modified.Size()
+	if count != len(contents) {
+		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", count, len(contents))
+	}
+	result, _, _ := modified.Get(1)
+	if result != "aa" {
+		t.Fatalf("Modified hash map has wrong value for key; got %s, expected 'aa'\n", result)
+	}
+}
+
+/*
+func Test_Hashmap_Insert_NilValue_WithSameKey(t *testing.T) {
+	contents := map[int]string{1: "a", 2: "b"}
+	original := NewIntToStringHashmap(contents)
+	modified, err := original.Insert(1, nil)
+	if err != nil {
+		t.Fatalf("Received error during insert: %s\n", err)
+	}
+	if modified == nil {
+		t.Fatalf("Received nil from insert\n")
+	}
+	count := modified.Size()
+	if count != len(contents) {
+		t.Fatalf("Modified hash map contains wrong count; got %d, expected %d\n", count, len(contents))
+	}
+	result, _, _ := modified.Get(1)
+	if result != nil {
+		t.Fatalf("Modified hash map has wrong value for key; got %s, expected 'aa'\n", result)
+	}
+}
+*/
+
+func Test_Hashmap_Insert_WithSameKeyAndSameValue(t *testing.T) {
+	contents := map[int]string{1: "a"}
+	original := NewIntToStringHashmap(contents)
+	modified, err := original.Insert(1, "a")
+	if err != nil {
+		t.Fatalf("Received error during insert: %s\n", err)
+	}
+	if original != modified {
+		t.Fatalf("Hash map returned from insert is not same hash map\n")
+	}
+}
+
 // func Test_Hashmap_Insert_SharesOptions(t *testing.T) {
 // 	original := NewHashMap(map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
 // 	modified, _ := original.Insert(integers.IntElement(2), strings.StringElement("b"))

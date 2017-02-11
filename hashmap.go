@@ -97,7 +97,7 @@ func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err e
 		}
 		b = b.overflow
 	}
-	fmt.Printf("Failed to find match\n")
+	fmt.Print("Failed to find match\n")
 	return nil, false, nil
 }
 
@@ -177,25 +177,16 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 }
 
 // Insert returns a new collection with the provided key-value pair added.
-// The pointer reciever may be nil; it will be treated as a instance with
-// no contents.
 func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
-	if h == nil {
-		return nil, errors.New("Pointer receiver is nil")
-	}
-	if key == nil {
-		return nil, errors.New("Element is nil")
-	}
-
 	if h.size == 0 {
 		result := createHashMap(1, h.options)
 		result.internalSet(key, value)
 		return result, nil
 	}
 
-	foundValue, _, _ := h.Get(key)
-	matched := foundValue != nil
-	if matched && foundValue == value {
+	foundValue, ok, _ := h.Get(key)
+	matched := ok
+	if matched && h.options.ValueConfig.Compare(foundValue, value) {
 		return h, nil
 	}
 
@@ -206,7 +197,7 @@ func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, er
 		result = createHashMap(size, h.options)
 		for kvp := range h.iterate(abort) {
 			insertValue := kvp.Value
-			if kvp.Key == key {
+			if h.options.KeyConfig.Compare(kvp.Key, key) {
 				insertValue = value
 			}
 			result.internalSet(kvp.Key, insertValue)
@@ -282,9 +273,6 @@ func (h *HashMap) Remove(key unsafe.Pointer) (*HashMap, error) {
 
 // Size returns the number of items in this collection
 func (h *HashMap) Size() int {
-	if h == nil {
-		return 0
-	}
 	return h.size
 }
 
