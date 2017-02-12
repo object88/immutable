@@ -57,6 +57,9 @@ func (hm *IntToStringHashmap) ForEach(predicate func(key int, value string)) {
 }
 
 func (hm *IntToStringHashmap) Get(key int) (value string, ok bool, err error) {
+	if hm == nil {
+		return "", false, errors.New("Pointer receiver is nil")
+	}
 	k := unsafe.Pointer(&key)
 	r, ok, err := hm.h.Get(k)
 	if err != nil {
@@ -67,6 +70,29 @@ func (hm *IntToStringHashmap) Get(key int) (value string, ok bool, err error) {
 	}
 	v := *(*string)(r)
 	return v, true, nil
+}
+
+func (hm *IntToStringHashmap) GetKeys() (results []int, err error) {
+	if hm == nil {
+		return nil, errors.New("Pointer receiver is nil")
+	}
+	var a []unsafe.Pointer
+	a, err = hm.h.GetKeys()
+	if err != nil {
+		return nil, err
+	}
+	results = make([]int, len(a))
+	for k, v := range a {
+		results[k] = *(*int)(v)
+	}
+	return results, nil
+}
+
+func (hm *IntToStringHashmap) GoString() string {
+	if hm == nil {
+		return "(nil)"
+	}
+	return hm.h.GoString()
 }
 
 func (hm *IntToStringHashmap) Insert(key int, value string) (result *IntToStringHashmap, err error) {
@@ -118,6 +144,24 @@ func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(acc
 	return acc, nil
 }
 
+// Remove returns a copy of the provided HashMap with the specified element
+// removed.
+func (hm *IntToStringHashmap) Remove(key int) (*IntToStringHashmap, error) {
+	if hm == nil {
+		return nil, errors.New("Pointer receiver is nil")
+	}
+
+	kp := unsafe.Pointer(&key)
+	newHashmap, err := hm.h.Remove(kp)
+	if err != nil {
+		return nil, err
+	}
+	if newHashmap == hm.h {
+		return hm, nil
+	}
+	return &IntToStringHashmap{newHashmap}, nil
+}
+
 func (hm *IntToStringHashmap) Size() int {
 	if hm == nil {
 		return 0
@@ -126,5 +170,8 @@ func (hm *IntToStringHashmap) Size() int {
 }
 
 func (hm *IntToStringHashmap) String() string {
+	if hm == nil {
+		return "(nil)"
+	}
 	return hm.h.String()
 }

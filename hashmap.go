@@ -2,7 +2,6 @@ package immutable
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -53,9 +52,6 @@ func NewHashMap(contents map[unsafe.Pointer]unsafe.Pointer, options ...core.Hash
 
 // Get returns the value for the given key
 func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
-	if h == nil {
-		return nil, false, errors.New("Pointer receiver is nil")
-	}
 	if key == nil {
 		return nil, false, errors.New("Element is nil")
 	}
@@ -97,7 +93,6 @@ func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err e
 		}
 		b = b.overflow
 	}
-	fmt.Print("Failed to find match\n")
 	return nil, false, nil
 }
 
@@ -105,10 +100,6 @@ func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err e
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
 func (h *HashMap) GetKeys() (results []unsafe.Pointer, err error) {
-	if h == nil {
-		return nil, errors.New("Pointer receiver is nil")
-	}
-
 	if h.size == 0 {
 		return []unsafe.Pointer{}, nil
 	}
@@ -121,7 +112,7 @@ func (h *HashMap) GetKeys() (results []unsafe.Pointer, err error) {
 			continue
 		}
 		for j := 0; j < int(b.entryCount); j++ {
-			v := h.options.ValueConfig.Read(b.values, j)
+			v := h.options.KeyConfig.Read(b.keys, j)
 			results[count] = v
 			count++
 		}
@@ -158,10 +149,6 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan core.KeyValuePair {
 
 // Filter returns a subset of the collection, based on the predicate supplied
 func (h *HashMap) Filter(predicate FilterPredicate) (*HashMap, error) {
-	if h == nil {
-		return nil, nil
-	}
-
 	b := &BaseStruct{h}
 	result, err := b.filter(predicate)
 	if err != nil {
@@ -218,10 +205,6 @@ func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, er
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
 func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
-	if h == nil {
-		return nil, nil
-	}
-
 	b := &BaseStruct{h}
 	result, err := b.mapping(predicate)
 	if err != nil {
@@ -232,10 +215,6 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 
 // Reduce operates over the collection contents to produce a single value
 func (h *HashMap) Reduce(predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
-	if h == nil {
-		return nil, nil
-	}
-
 	b := &BaseStruct{h}
 	return b.reduce(predicate, accumulator)
 }
@@ -243,10 +222,6 @@ func (h *HashMap) Reduce(predicate ReducePredicate, accumulator unsafe.Pointer) 
 // Remove returns a copy of the provided HashMap with the specified element
 // removed.
 func (h *HashMap) Remove(key unsafe.Pointer) (*HashMap, error) {
-	if h == nil {
-		return nil, errors.New("Pointer receiver is nil")
-	}
-
 	if h.size == 0 {
 		return h, nil
 	}
@@ -263,7 +238,7 @@ func (h *HashMap) Remove(key unsafe.Pointer) (*HashMap, error) {
 	result := createHashMap(size, h.options)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
-		if kvp.Key != key {
+		if !h.options.KeyConfig.Compare(kvp.Key, key) {
 			result.internalSet(kvp.Key, kvp.Value)
 		}
 	}

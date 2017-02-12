@@ -8,10 +8,6 @@ import (
 // GoString provides a programmatic view into a HashMap.  This may be used,
 // for example, with the '%#v' operand to fmt.Printf, fmt.Sprintf, etc.
 func (h *HashMap) GoString() string {
-	if h == nil {
-		return "(nil)"
-	}
-
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("Size: %d\n[\n", h.size))
 	for k, v := range h.buckets {
