@@ -10,9 +10,9 @@ import (
 type Base interface {
 	// Get(key Element) (result Element, ok bool)
 	Size() int
-	instantiate(initialSize int, contents []*core.KeyValuePair) *BaseStruct
-	internalSet(key unsafe.Pointer, value unsafe.Pointer)
-	iterate(abort <-chan struct{}) <-chan core.KeyValuePair
+	instantiate(config *core.HashmapConfig, initialSize int, contents []*core.KeyValuePair) *BaseStruct
+	internalSet(config *core.HashmapConfig, key unsafe.Pointer, value unsafe.Pointer)
+	iterate(config *core.HashmapConfig, abort <-chan struct{}) <-chan core.KeyValuePair
 }
 
 // BaseStruct is what it say on the tin
@@ -21,11 +21,11 @@ type BaseStruct struct {
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
-func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
+func (b *BaseStruct) filter(config *core.HashmapConfig, predicate FilterPredicate) (*BaseStruct, error) {
 	resultSet := make([]*core.KeyValuePair, b.Size())
 	resultSetCount := 0
 	abort := make(chan struct{})
-	ch := b.iterate(abort)
+	ch := b.iterate(config, abort)
 	for kvp := range ch {
 		keep, err := predicate(kvp.Key, kvp.Value)
 		if err != nil {
@@ -38,39 +38,39 @@ func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
 		}
 	}
 
-	mutated := b.instantiate(resultSetCount, resultSet)
+	mutated := b.instantiate(config, resultSetCount, resultSet)
 
 	return mutated, nil
 }
 
-func (b *BaseStruct) forEach(predicate ForEachPredicate) {
+func (b *BaseStruct) forEach(config *core.HashmapConfig, predicate ForEachPredicate) {
 	abort := make(chan struct{})
-	ch := b.iterate(abort)
+	ch := b.iterate(config, abort)
 	for kvp := range ch {
 		predicate(kvp.Key, kvp.Value)
 	}
 }
 
-func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
-	mutated := b.instantiate(b.Size(), nil)
+func (b *BaseStruct) mapping(config *core.HashmapConfig, predicate MapPredicate) (*BaseStruct, error) {
+	mutated := b.instantiate(config, b.Size(), nil)
 	abort := make(chan struct{})
-	ch := b.iterate(abort)
+	ch := b.iterate(config, abort)
 	for kvp := range ch {
 		newV, err := predicate(kvp.Key, kvp.Value)
 		if err != nil {
 			close(abort)
 			return nil, err
 		}
-		mutated.internalSet(kvp.Key, newV)
+		mutated.internalSet(config, kvp.Key, newV)
 	}
 	return mutated, nil
 }
 
-func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
+func (b *BaseStruct) reduce(config *core.HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	acc := accumulator
 	var err error
 	abort := make(chan struct{})
-	for kvp := range b.iterate(abort) {
+	for kvp := range b.iterate(config, abort) {
 		acc, err = predicate(acc, kvp.Key, kvp.Value)
 		if err != nil {
 			close(abort)

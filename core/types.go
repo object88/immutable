@@ -2,6 +2,11 @@ package core
 
 import "unsafe"
 
+type HashmapConfig struct {
+	KeyConfig   HandlerConfig
+	ValueConfig HandlerConfig
+}
+
 type HandlerConfig interface {
 	Compare(a, b unsafe.Pointer) (match bool)
 	CompareTo(memory unsafe.Pointer, index int, other unsafe.Pointer) (match bool)

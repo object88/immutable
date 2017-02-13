@@ -60,13 +60,13 @@ func WithMyBadHandlerMetadata(o *core.HashMapOptions) {
 }
 
 func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
-	original, data := createHashmapAndData()
+	original, config, data := createHashmapAndData()
 
 	size := original.Size()
 	if size != len(data) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
-	original.ForEach(func(kp, _ unsafe.Pointer) {
+	original.ForEach(config, func(kp, _ unsafe.Pointer) {
 		k := *(*int)(kp)
 		if data[k] == "visited" {
 			t.Fatalf("At %d, already visited\n", k)
@@ -82,10 +82,10 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 }
 
 func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
-	original, data := createHashmapAndData()
+	original, config, data := createHashmapAndData()
 
 	for k, v := range data {
-		rp, _, _ := original.Get(unsafe.Pointer(&k))
+		rp, _, _ := original.Get(config, unsafe.Pointer(&k))
 		r := *(*string)(rp)
 		if r != v {
 			t.Fatalf("At %d, expected %s, got %s\n", k, v, r)
@@ -93,7 +93,7 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	}
 }
 
-func createHashmapAndData() (*HashMap, map[int]string) {
+func createHashmapAndData() (*HashMap, *core.HashmapConfig, map[int]string) {
 	max := 100
 	data := make(map[int]string, max)
 	for i := 0; i < max; i++ {
@@ -103,13 +103,18 @@ func createHashmapAndData() (*HashMap, map[int]string) {
 	opts := core.DefaultHashMapOptions()
 	WithMyBadHandlerMetadata(opts)
 
-	original := CreateEmptyHashmap(max, opts)
+	c := &core.HashmapConfig{
+		KeyConfig:   MyBadHandler{},
+		ValueConfig: strings.GetHandler(),
+	}
+
+	original := CreateEmptyHashmap(max)
 
 	for k, v := range data {
 		key, value := k, v
 		kp, vp := unsafe.Pointer(&key), unsafe.Pointer(&value)
-		original.internalSet(kp, vp)
+		original.internalSet(c, kp, vp)
 	}
 
-	return original, data
+	return original, c, data
 }
