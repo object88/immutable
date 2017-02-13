@@ -87,7 +87,7 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 	}
 }
 
-func createHashmapAndData() (*HashMap, *core.HashmapConfig, map[int]string) {
+func createHashmapAndData() (*core.InternalHashmap, *core.HashmapConfig, map[int]string) {
 	max := 100
 	data := make(map[int]string, max)
 	for i := 0; i < max; i++ {
@@ -100,12 +100,12 @@ func createHashmapAndData() (*HashMap, *core.HashmapConfig, map[int]string) {
 		ValueConfig: strings.GetHandler(),
 	}
 
-	original := CreateEmptyHashmap(max)
+	original := core.CreateEmptyInternalHashmap(max)
 
 	for k, v := range data {
 		key, value := k, v
 		kp, vp := unsafe.Pointer(&key), unsafe.Pointer(&value)
-		original.internalSet(c, kp, vp)
+		original.InternalSet(c, kp, vp)
 	}
 
 	return original, c, data

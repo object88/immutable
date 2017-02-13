@@ -26,11 +26,11 @@ The `GetKeys` method returns the collection of `Element` objects used to store v
 
 It is important to note that, just as the collection functions do not operate in any order, the `GetKeys` method will return the key collection in random order.
 
-#### `Insert(key Element, value Element) (*HashMap, error)`
+#### `Insert(key Element, value Element) (*InternalHashmap, error)`
 
 The insert method creates a copy of the provided hashmap collection with the provided key-value pair added.  The `key` may not be `nil`, but `value` may.
 
-#### `Remove(key Element) (*HashMap, error)`
+#### `Remove(key Element) (*InternalHashmap, error)`
 
 The remove method creates a copy of the provided hashmap collection, with the entry at the specified key removed.  If the method would result in no change, the same reference is returned.
 

@@ -35,7 +35,7 @@ func Test_Hashmap(t *testing.T) {
 	}
 }
 
-func Test_HashMap_Nil_Size(t *testing.T) {
+func Test_InternalHashmap_Nil_Size(t *testing.T) {
 	var original *IntToStringHashmap
 	size := original.Size()
 	if 0 != size {
@@ -43,14 +43,17 @@ func Test_HashMap_Nil_Size(t *testing.T) {
 	}
 }
 
-func Test_HashMap_Empty_Create(t *testing.T) {
+func Test_InternalHashmap_Empty_Create(t *testing.T) {
 	original := NewIntToStringHashmap(map[int]string{})
 	if original == nil {
-		t.Fatalf("Creating HashMap with empty map returned nil\n")
+		t.Fatalf("Creating InternalHashmap with empty map returned nil\n")
 	}
+	// if original.h != emptyHashmap {
+	// 	t.Fatalf("Failed to return the common empty instance of the hashmap\n")
+	// }
 }
 
-func Test_HashMap_Empty_Size(t *testing.T) {
+func Test_InternalHashmap_Empty_Size(t *testing.T) {
 	original := NewIntToStringHashmap(map[int]string{})
 	size := original.Size()
 	if size != 0 {
@@ -61,7 +64,7 @@ func Test_HashMap_Empty_Size(t *testing.T) {
 func Test_Hashmap_Create_WithNilContents(t *testing.T) {
 	original := NewIntToStringHashmap(nil)
 	if nil == original {
-		t.Fatal("NewHashMap with nil argument returned nil")
+		t.Fatal("NewInternalHashmap with nil argument returned nil")
 	}
 	size := original.Size()
 	if size != 0 {
@@ -148,7 +151,7 @@ func Test_Hashmap_Insert_NilKey(t *testing.T) {
 
 func Test_Hashmap_Insert_NilValue(t *testing.T) {
 	contents := map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}
-	original := NewHashMap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
+	original := NewInternalHashmap(contents, integers.WithIntKeyMetadata, strings.WithStringPointerValueMetadata)
 	modified, err := original.Insert(integers.IntElement(2), nil)
 	if err != nil {
 		t.Fatalf("Received error during insert: %s\n", err)
@@ -222,7 +225,7 @@ func Test_Hashmap_Insert_WithSameKeyAndSameValue(t *testing.T) {
 }
 
 // func Test_Hashmap_Insert_SharesOptions(t *testing.T) {
-// 	original := NewHashMap(map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
+// 	original := NewInternalHashmap(map[core.Element]core.Element{integers.IntElement(1): strings.StringElement("a")}, integers.WithIntKeyMetadata, strings.WithStringValueMetadata)
 // 	modified, _ := original.Insert(integers.IntElement(2), strings.StringElement("b"))
 //
 // 	if modified.options != original.options {
@@ -377,6 +380,9 @@ func Test_Hashmap_Remove_WithContents_ToEmpty(t *testing.T) {
 	if size != 0 {
 		t.Fatalf("Incorrect number of entries in returned collection; expected 0, got %d\n", size)
 	}
+	// if modified.h != emptyHashmap {
+	// 	t.Fatal("Failed to assign inner hashmap to empty hashmap")
+	// }
 }
 
 func Test_Hashmap_Remove_Miss(t *testing.T) {

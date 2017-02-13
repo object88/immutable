@@ -29,12 +29,12 @@ Common methods:
 _`StringToIntegerHashmap` is a string to integer hashmap_
 
 ``` Go
-type internalHashMap
+type InternalHashmap
 
 type StringToIntHashmap struct {
   GetHash func(key String) uint64
 
-  i internalHashMap
+  i InternalHashmap
 }
 ```
 

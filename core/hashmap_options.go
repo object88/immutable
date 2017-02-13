@@ -3,7 +3,7 @@ package core
 import "github.com/object88/immutable/memory"
 
 // HashmapOption can be implemented to set a hash map option using the
-// NewHashMap function
+// NewInternalHashmap function
 type HashmapOption func(*HashmapOptions)
 
 // WithBucketStrategy selects a bucket strategy for the hash map
