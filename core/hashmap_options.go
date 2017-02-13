@@ -1,4 +1,4 @@
-package immutable
+package core
 
 import "github.com/object88/immutable/memory"
 
@@ -18,9 +18,11 @@ func WithBucketStrategy(blocksize memory.BlockSize) HashMapOption {
 // the NewHashMapOptions function instead.
 type HashMapOptions struct {
 	BucketStrategy memory.BlockSize
+	KeyConfig      HandlerConfig
+	ValueConfig    HandlerConfig
 }
 
-func defaultHashMapOptions() *HashMapOptions {
+func DefaultHashMapOptions() *HashMapOptions {
 	return &HashMapOptions{
 		BucketStrategy: memory.LargeBlock,
 	}

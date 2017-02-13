@@ -5,25 +5,23 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"unsafe"
 
+	"github.com/object88/immutable/core"
 	"github.com/object88/immutable/memory"
 )
 
 type bucket struct {
 	entryCount byte
 	hobs       memory.Memories
-	entries    []entry
+	keys       unsafe.Pointer
+	values     unsafe.Pointer
 	overflow   *bucket
-}
-
-type entry struct {
-	key   Key
-	value Value
 }
 
 // HashMap is a read-only key-to-value collection
 type HashMap struct {
-	options *HashMapOptions
+	options *core.HashMapOptions
 	size    int
 	buckets []*bucket
 	lobMask uint32
@@ -32,13 +30,13 @@ type HashMap struct {
 }
 
 const (
-	bucketCapacity = 1 << 3
+	bucketCapacity = 8
 	loadFactor     = 6.0
 )
 
 // NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
-	opts := defaultHashMapOptions()
+func NewHashMap(contents map[unsafe.Pointer]unsafe.Pointer, options ...core.HashMapOption) *HashMap {
+	opts := core.DefaultHashMapOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
@@ -53,18 +51,15 @@ func NewHashMap(contents map[Key]Value, options ...HashMapOption) *HashMap {
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
-	if h == nil {
-		return nil, false, errors.New("Pointer receiver is nil")
-	}
+func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
 	if key == nil {
-		return nil, false, errors.New("Key is nil")
+		return nil, false, errors.New("Element is nil")
 	}
 	if h.size == 0 {
 		return nil, false, nil
 	}
 
-	hashkey := key.Hash(h.seed)
+	hashkey := h.options.KeyConfig.Hash(key, h.seed)
 
 	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
@@ -80,14 +75,20 @@ func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
 	// 	maskedHash)
 
 	for b != nil {
-		for index := uint64(0); index < totalEntries; index++ {
+		for index := 0; index < int(totalEntries); index++ {
+			if b.hobs.Read(uint64(index)) != maskedHash {
+				continue
+			}
+
 			// fmt.Printf(
-			// 	"0x%016x <-> 0x%016x :: %s <-> %s\n",
-			// 	b.hobs.Read(index),
+			// 	"0x%016x <-> 0x%016x :: %#v <-> %s\n",
+			// 	b.hobs.Read(uint64(index)),
 			// 	maskedHash,
-			// 	b.entries[index].key, key)
-			if b.hobs.Read(index) == maskedHash && b.entries[index].key == key {
-				return b.entries[index].value, true, nil
+			// 	k, key)
+			if h.options.KeyConfig.CompareTo(b.keys, index, key) {
+				v := h.options.ValueConfig.Read(b.values, index)
+
+				return v, true, nil
 			}
 		}
 		b = b.overflow
@@ -98,24 +99,21 @@ func (h *HashMap) Get(key Key) (result Value, ok bool, err error) {
 // GetKeys returns an array of keys in the hashmap.  If there are no entries,
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
-func (h *HashMap) GetKeys() (results []Key, err error) {
-	if h == nil {
-		return nil, errors.New("Pointer receiver is nil")
-	}
-
+func (h *HashMap) GetKeys() (results []unsafe.Pointer, err error) {
 	if h.size == 0 {
-		return []Key{}, nil
+		return []unsafe.Pointer{}, nil
 	}
 
-	results = make([]Key, h.size)
+	results = make([]unsafe.Pointer, h.size)
 	count := 0
 	for i := 0; i < len(h.buckets); i++ {
 		b := h.buckets[i]
 		if b == nil {
 			continue
 		}
-		for j := byte(0); j < b.entryCount; j++ {
-			results[count] = b.entries[j].key
+		for j := 0; j < int(b.entryCount); j++ {
+			v := h.options.KeyConfig.Read(b.keys, j)
+			results[count] = v
 			count++
 		}
 	}
@@ -123,17 +121,20 @@ func (h *HashMap) GetKeys() (results []Key, err error) {
 	return results, nil
 }
 
-func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
-	ch := make(chan keyValuePair)
+func (h *HashMap) iterate(abort <-chan struct{}) <-chan core.KeyValuePair {
+	ch := make(chan core.KeyValuePair)
 
 	go func() {
 		defer close(ch)
 		for i := 0; i < len(h.buckets); i++ {
 			b := h.buckets[i]
 			for b != nil {
-				for j := byte(0); j < b.entryCount; j++ {
+				for j := 0; j < int(b.entryCount); j++ {
+					k := h.options.KeyConfig.Read(b.keys, j)
+					v := h.options.ValueConfig.Read(b.values, j)
+
 					select {
-					case ch <- keyValuePair{b.entries[j].key, b.entries[j].value}:
+					case ch <- core.KeyValuePair{Key: k, Value: v}:
 					case <-abort:
 						return
 					}
@@ -148,10 +149,6 @@ func (h *HashMap) iterate(abort <-chan struct{}) <-chan keyValuePair {
 
 // Filter returns a subset of the collection, based on the predicate supplied
 func (h *HashMap) Filter(predicate FilterPredicate) (*HashMap, error) {
-	if h == nil {
-		return nil, nil
-	}
-
 	b := &BaseStruct{h}
 	result, err := b.filter(predicate)
 	if err != nil {
@@ -167,25 +164,16 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 }
 
 // Insert returns a new collection with the provided key-value pair added.
-// The pointer reciever may be nil; it will be treated as a instance with
-// no contents.
-func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
-	if h == nil {
-		return nil, errors.New("Pointer receiver is nil")
-	}
-	if key == nil {
-		return nil, errors.New("Key is nil")
-	}
-
+func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
 	if h.size == 0 {
 		result := createHashMap(1, h.options)
 		result.internalSet(key, value)
 		return result, nil
 	}
 
-	foundValue, _, _ := h.Get(key)
-	matched := foundValue != nil
-	if matched && foundValue == value {
+	foundValue, ok, _ := h.Get(key)
+	matched := ok
+	if matched && h.options.ValueConfig.Compare(foundValue, value) {
 		return h, nil
 	}
 
@@ -195,17 +183,17 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 	if matched {
 		result = createHashMap(size, h.options)
 		for kvp := range h.iterate(abort) {
-			insertValue := kvp.value
-			if kvp.key == key {
+			insertValue := kvp.Value
+			if h.options.KeyConfig.Compare(kvp.Key, key) {
 				insertValue = value
 			}
-			result.internalSet(kvp.key, insertValue)
+			result.internalSet(kvp.Key, insertValue)
 		}
 	} else {
 		size++
 		result = createHashMap(size, h.options)
 		for kvp := range h.iterate(abort) {
-			result.internalSet(kvp.key, kvp.value)
+			result.internalSet(kvp.Key, kvp.Value)
 		}
 
 		result.internalSet(key, value)
@@ -217,10 +205,6 @@ func (h *HashMap) Insert(key Key, value Value) (*HashMap, error) {
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
 func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
-	if h == nil {
-		return nil, nil
-	}
-
 	b := &BaseStruct{h}
 	result, err := b.mapping(predicate)
 	if err != nil {
@@ -230,22 +214,14 @@ func (h *HashMap) Map(predicate MapPredicate) (*HashMap, error) {
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *HashMap) Reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
-	if h == nil {
-		return nil, nil
-	}
-
+func (h *HashMap) Reduce(predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	b := &BaseStruct{h}
 	return b.reduce(predicate, accumulator)
 }
 
 // Remove returns a copy of the provided HashMap with the specified element
 // removed.
-func (h *HashMap) Remove(key Key) (*HashMap, error) {
-	if h == nil {
-		return nil, errors.New("Pointer receiver is nil")
-	}
-
+func (h *HashMap) Remove(key unsafe.Pointer) (*HashMap, error) {
 	if h.size == 0 {
 		return h, nil
 	}
@@ -262,8 +238,8 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 	result := createHashMap(size, h.options)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
-		if kvp.key != key {
-			result.internalSet(kvp.key, kvp.value)
+		if !h.options.KeyConfig.Compare(kvp.Key, key) {
+			result.internalSet(kvp.Key, kvp.Value)
 		}
 	}
 
@@ -272,47 +248,46 @@ func (h *HashMap) Remove(key Key) (*HashMap, error) {
 
 // Size returns the number of items in this collection
 func (h *HashMap) Size() int {
-	if h == nil {
-		return 0
-	}
 	return h.size
 }
 
-func (h *HashMap) instantiate(size int, contents []*keyValuePair) *BaseStruct {
+func (h *HashMap) instantiate(size int, contents []*core.KeyValuePair) *BaseStruct {
 	hash := createHashMap(size, h.options)
 
 	for _, v := range contents {
 		if v != nil {
-			hash.internalSet(v.key, v.value)
+			hash.internalSet(v.Key, v.Value)
 		}
 	}
 
 	return &BaseStruct{hash}
 }
 
-func (h *HashMap) internalSet(key Key, value Value) {
+func (h *HashMap) internalSet(key unsafe.Pointer, value unsafe.Pointer) {
 	hobSize := uint32(64 - h.lobSize)
 
-	hashkey := key.Hash(h.seed)
+	hashkey := h.options.KeyConfig.Hash(key, h.seed)
 	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		// Create the bucket.
-		b = createEmptyBucket(h.options.BucketStrategy, hobSize)
+		b = createEmptyBucket(h.options, hobSize)
 		h.buckets[selectedBucket] = b
 	}
-	for b.entryCount == 8 {
+	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
-			b.overflow = createEmptyBucket(h.options.BucketStrategy, hobSize)
+			b.overflow = createEmptyBucket(h.options, hobSize)
 		}
 		b = b.overflow
 	}
-	b.entries[b.entryCount] = entry{key, value}
+	index := int(b.entryCount)
+	h.options.KeyConfig.Write(b.keys, index, key)
+	h.options.ValueConfig.Write(b.values, index, value)
 	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
 }
 
-func createHashMap(size int, options *HashMapOptions) *HashMap {
+func createHashMap(size int, options *core.HashMapOptions) *HashMap {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
@@ -326,11 +301,12 @@ func createHashMap(size int, options *HashMapOptions) *HashMap {
 	return &HashMap{options, initialCount, buckets, lobMask, lobSize, seed}
 }
 
-func createEmptyBucket(blockSize memory.BlockSize, hobSize uint32) *bucket {
+func createEmptyBucket(options *core.HashMapOptions, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
-		hobs:       memory.AllocateMemories(blockSize, hobSize, 8),
-		entries:    make([]entry, bucketCapacity),
+		hobs:       memory.AllocateMemories(options.BucketStrategy, hobSize, bucketCapacity),
+		keys:       options.KeyConfig.CreateBucket(bucketCapacity),
+		values:     options.ValueConfig.CreateBucket(bucketCapacity),
 		overflow:   nil,
 	}
 }

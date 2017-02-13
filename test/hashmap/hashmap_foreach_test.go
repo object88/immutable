@@ -1,4 +1,4 @@
-package immutable
+package immutable_test
 
 import (
 	"testing"
@@ -7,25 +7,25 @@ import (
 )
 
 func Test_Hashmap_ForEach(t *testing.T) {
-	data := map[immutable.Key]immutable.Value{
-		immutable.IntKey(0): false,
-		immutable.IntKey(1): false,
-		immutable.IntKey(2): false,
-		immutable.IntKey(3): false,
+	contents := map[int]string{
+		0: "false",
+		1: "false",
+		2: "false",
+		3: "false",
 	}
-	original := immutable.NewHashMap(data)
+	original := immutable.NewIntToStringHashmap(contents)
 	if original == nil {
 		t.Fatal("Failed to create hashmap")
 	}
-	original.ForEach(func(k immutable.Key, v immutable.Value) {
-		if v.(bool) {
+	original.ForEach(func(k int, v string) {
+		if contents[k] == "true" {
 			t.Fatalf("At %s, already visited\n", k)
 		}
-		data[k] = true
+		contents[k] = "true"
 	})
 
-	for k, v := range data {
-		if !v.(bool) {
+	for k, v := range contents {
+		if v != "true" {
 			t.Fatalf("At %s, not visited\n", k)
 		}
 	}

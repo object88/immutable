@@ -3,19 +3,19 @@ package immutable
 import (
 	"bytes"
 	"fmt"
+	"unsafe"
 )
 
 func (h *HashMap) String() string {
-	if h == nil {
-		return "(nil)"
-	}
-
 	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("Size: %d\n", h.size))
-	buffer.WriteString(fmt.Sprintf("[\n"))
-	h.ForEach(func(k Key, v Value) {
-		buffer.WriteString(fmt.Sprintf("  %s: %s\n", k, v))
+	buffer.WriteString("Size: ")
+	buffer.WriteString(fmt.Sprintf("%d", h.size))
+	buffer.WriteString("\n[\n")
+	h.ForEach(func(k unsafe.Pointer, v unsafe.Pointer) {
+		ks := h.options.KeyConfig.Format(k)
+		vs := h.options.ValueConfig.Format(v)
+		buffer.WriteString(fmt.Sprintf("  %s: %s\n", ks, vs))
 	})
-	buffer.WriteString(fmt.Sprintf("]\n"))
+	buffer.WriteString("]\n")
 	return buffer.String()
 }

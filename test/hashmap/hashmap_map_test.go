@@ -1,21 +1,22 @@
-package immutable
+package immutable_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/object88/immutable"
 )
 
 func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
-	var original *immutable.HashMap
+	var original *immutable.IntToStringHashmap
 	invokeCount := 0
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	modified, err := original.Map(func(k int, v string) (string, error) {
 		invokeCount++
-		return v.(int) * 2, nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
-	if err != nil {
-		t.Error(err)
+	if err == nil {
+		t.Error("No error returned")
 	}
 	if modified != nil {
 		t.Fatal("Did not return nil")
@@ -26,12 +27,12 @@ func Test_Hashmap_Map_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithEmpty(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{}
-	original := immutable.NewHashMap(contents)
+	contents := map[int]string{}
+	original := immutable.NewIntToStringHashmap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	modified, err := original.Map(func(k int, v string) (string, error) {
 		invokeCount++
-		return v.(int) * 2, nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
 	if err != nil {
 		t.Error(err)
@@ -45,25 +46,25 @@ func Test_Hashmap_Map_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithContents(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[int]string{
+		1: "1",
+		2: "2",
+		3: "3",
 	}
-	original := immutable.NewHashMap(contents)
+	original := immutable.NewIntToStringHashmap(contents)
 	invokeCount := 0
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	modified, err := original.Map(func(k int, v string) (string, error) {
 		invokeCount++
-		return v.(int) * 2, nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
 	if err != nil {
 		t.Error(err)
 	}
 	for k, v := range contents {
 		result, _, _ := modified.Get(k)
-		expected := v.(int) * 2
+		expected := fmt.Sprintf("%s%s", v)
 		if result != expected {
-			t.Fatalf("At %s, got incorrect result, expected %d, got %d\n", k, expected, result)
+			t.Fatalf("At %s, got incorrect result, expected %s, got %s\n", k, expected, result)
 		}
 	}
 	if invokeCount != 3 {
@@ -72,17 +73,17 @@ func Test_Hashmap_Map_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Map_WithCancel(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[int]string{
+		1: "1",
+		2: "2",
+		3: "3",
 	}
-	original := immutable.NewHashMap(contents)
-	modified, err := original.Map(func(k immutable.Key, v immutable.Value) (immutable.Value, error) {
-		if k.(immutable.IntKey)%2 == 0 {
-			return nil, errors.New("Found an even key")
+	original := immutable.NewIntToStringHashmap(contents)
+	modified, err := original.Map(func(k int, v string) (string, error) {
+		if k%2 == 0 {
+			return "", errors.New("Found an even key")
 		}
-		return v.(int) * 2, nil
+		return fmt.Sprintf("%s%s", v), nil
 	})
 	if err == nil {
 		t.Fatalf("Failed to return error")

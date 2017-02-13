@@ -1,4 +1,4 @@
-package immutable
+package benchmark
 
 import (
 	"encoding/binary"

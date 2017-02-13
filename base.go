@@ -1,12 +1,18 @@
 package immutable
 
+import (
+	"unsafe"
+
+	"github.com/object88/immutable/core"
+)
+
 // Base describes the low-level set of functions
 type Base interface {
-	// Get(key Key) (result Value, ok bool)
+	// Get(key Element) (result Element, ok bool)
 	Size() int
-	instantiate(initialSize int, contents []*keyValuePair) *BaseStruct
-	internalSet(key Key, value Value)
-	iterate(abort <-chan struct{}) <-chan keyValuePair
+	instantiate(initialSize int, contents []*core.KeyValuePair) *BaseStruct
+	internalSet(key unsafe.Pointer, value unsafe.Pointer)
+	iterate(abort <-chan struct{}) <-chan core.KeyValuePair
 }
 
 // BaseStruct is what it say on the tin
@@ -16,18 +22,18 @@ type BaseStruct struct {
 
 // Filter returns a subset of the collection, based on the predicate supplied
 func (b *BaseStruct) filter(predicate FilterPredicate) (*BaseStruct, error) {
-	resultSet := make([]*keyValuePair, b.Size())
+	resultSet := make([]*core.KeyValuePair, b.Size())
 	resultSetCount := 0
 	abort := make(chan struct{})
 	ch := b.iterate(abort)
 	for kvp := range ch {
-		keep, err := predicate(kvp.key, kvp.value)
+		keep, err := predicate(kvp.Key, kvp.Value)
 		if err != nil {
 			close(abort)
 			return nil, err
 		}
 		if keep {
-			resultSet[resultSetCount] = &keyValuePair{kvp.key, kvp.value}
+			resultSet[resultSetCount] = &core.KeyValuePair{Key: kvp.Key, Value: kvp.Value}
 			resultSetCount++
 		}
 	}
@@ -41,7 +47,7 @@ func (b *BaseStruct) forEach(predicate ForEachPredicate) {
 	abort := make(chan struct{})
 	ch := b.iterate(abort)
 	for kvp := range ch {
-		predicate(kvp.key, kvp.value)
+		predicate(kvp.Key, kvp.Value)
 	}
 }
 
@@ -50,22 +56,22 @@ func (b *BaseStruct) mapping(predicate MapPredicate) (*BaseStruct, error) {
 	abort := make(chan struct{})
 	ch := b.iterate(abort)
 	for kvp := range ch {
-		newV, err := predicate(kvp.key, kvp.value)
+		newV, err := predicate(kvp.Key, kvp.Value)
 		if err != nil {
 			close(abort)
 			return nil, err
 		}
-		mutated.internalSet(kvp.key, newV)
+		mutated.internalSet(kvp.Key, newV)
 	}
 	return mutated, nil
 }
 
-func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator Value) (Value, error) {
+func (b *BaseStruct) reduce(predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	acc := accumulator
 	var err error
 	abort := make(chan struct{})
 	for kvp := range b.iterate(abort) {
-		acc, err = predicate(acc, kvp.key, kvp.value)
+		acc, err = predicate(acc, kvp.Key, kvp.Value)
 		if err != nil {
 			close(abort)
 			return nil, err

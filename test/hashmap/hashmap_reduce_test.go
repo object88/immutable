@@ -1,21 +1,23 @@
-package immutable
+package immutable_test
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/object88/immutable"
 )
 
 func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
-	var original *immutable.HashMap
+	var original *immutable.IntToStringHashmap
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	sum, err := original.Reduce(0, func(acc interface{}, k int, v string) (interface{}, error) {
 		invokeCount++
-		return acc.(int) + v.(int), nil
-	}, 0)
-	if err != nil {
-		t.Error(err)
+		i, _ := strconv.Atoi(v)
+		return acc.(int) + i, nil
+	})
+	if err == nil {
+		t.Error("No error returned")
 	}
 	if sum != nil {
 		t.Fatal("Did not return nil")
@@ -26,13 +28,14 @@ func Test_Hashmap_Reduce_WithUnassigned(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{}
-	original := immutable.NewHashMap(contents)
+	contents := map[int]string{}
+	original := immutable.NewIntToStringHashmap(contents)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	sum, err := original.Reduce(0, func(acc interface{}, k int, v string) (interface{}, error) {
 		invokeCount++
-		return acc.(int) + v.(int), nil
-	}, 0)
+		i, _ := strconv.Atoi(v)
+		return acc.(int) + i, nil
+	})
 	if err != nil {
 		t.Error(err)
 	}
@@ -45,22 +48,23 @@ func Test_Hashmap_Reduce_WithEmpty(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithContents(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[int]string{
+		1: "1",
+		2: "2",
+		3: "3",
 	}
-	original := immutable.NewHashMap(contents)
+	original := immutable.NewIntToStringHashmap(contents)
 	invokeCount := 0
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
+	sum, err := original.Reduce(0, func(acc interface{}, k int, v string) (interface{}, error) {
 		invokeCount++
-		return acc.(int) + v.(int), nil
-	}, 0)
+		i, _ := strconv.Atoi(v)
+		return acc.(int) + i, nil
+	})
 	if err != nil {
 		t.Error(err)
 	}
 	if sum != 6 {
-		t.Fatal("Did not return expected accumulator")
+		t.Fatalf("Did not return expected accumulator; got %s; expected 123", sum)
 	}
 	if invokeCount != 3 {
 		t.Fatalf("Function invoked %d times", invokeCount)
@@ -68,18 +72,19 @@ func Test_Hashmap_Reduce_WithContents(t *testing.T) {
 }
 
 func Test_Hashmap_Reduce_WithCancel(t *testing.T) {
-	contents := map[immutable.Key]immutable.Value{
-		immutable.IntKey(1): 1,
-		immutable.IntKey(2): 2,
-		immutable.IntKey(3): 3,
+	contents := map[int]string{
+		1: "1",
+		2: "2",
+		3: "3",
 	}
-	original := immutable.NewHashMap(contents)
-	sum, err := original.Reduce(func(acc immutable.Value, k immutable.Key, v immutable.Value) (immutable.Value, error) {
-		if k.(immutable.IntKey)%2 == 0 {
+	original := immutable.NewIntToStringHashmap(contents)
+	sum, err := original.Reduce(0, func(acc interface{}, k int, v string) (interface{}, error) {
+		if k%2 == 0 {
 			return nil, errors.New("Found an even key")
 		}
-		return acc.(int) + v.(int), nil
-	}, 0)
+		i, _ := strconv.Atoi(v)
+		return acc.(int) + i, nil
+	})
 	if err == nil {
 		t.Fatalf("Failed to return error")
 	}
