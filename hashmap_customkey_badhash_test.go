@@ -52,7 +52,7 @@ func (MyBadHandler) Write(memory unsafe.Pointer, index int, value unsafe.Pointer
 	m[index] = *(*int)(value)
 }
 
-func WithMyBadElementMetadata(o *core.HashMapOptions) {
+func WithMyBadHandlerMetadata(o *core.HashMapOptions) {
 	var handler MyBadHandler
 	o.KeyConfig = handler
 	strings.WithStringValueMetadata(o)
@@ -69,7 +69,7 @@ func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 		key, value := k, v
 		contents[unsafe.Pointer(&key)] = unsafe.Pointer(&value)
 	}
-	original := NewHashMap(contents, WithMyBadElementMetadata)
+	original := NewHashMap(contents, WithMyBadHandlerMetadata)
 	if original == nil {
 		t.Fatal("NewHashMap returned nil\n")
 	}
@@ -100,7 +100,7 @@ func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
 		contents[unsafe.Pointer(&i)] = unsafe.Pointer(&s)
 	}
 
-	original := NewHashMap(contents, WithMyBadElementMetadata)
+	original := NewHashMap(contents, WithMyBadHandlerMetadata)
 
 	for k, v := range contents {
 		result, _, _ := original.Get(k)
