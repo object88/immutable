@@ -53,12 +53,6 @@ func (MyBadHandler) Write(memory unsafe.Pointer, index int, value unsafe.Pointer
 	m[index] = *(*int)(value)
 }
 
-func WithMyBadHandlerMetadata(o *core.HashMapOptions) {
-	var handler MyBadHandler
-	o.KeyConfig = handler
-	strings.WithStringValueMetadata(o)
-}
-
 func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
 	original, config, data := createHashmapAndData()
 
@@ -99,9 +93,6 @@ func createHashmapAndData() (*HashMap, *core.HashmapConfig, map[int]string) {
 	for i := 0; i < max; i++ {
 		data[i] = strconv.Itoa(i)
 	}
-
-	opts := core.DefaultHashMapOptions()
-	WithMyBadHandlerMetadata(opts)
 
 	c := &core.HashmapConfig{
 		KeyConfig:   MyBadHandler{},

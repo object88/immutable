@@ -18,18 +18,6 @@ func GetHandler() core.HandlerConfig {
 	return config
 }
 
-// WithStringKeyMetadata establishes the hydrator and dehydrator methods
-// for working with integer keys.
-func WithStringKeyMetadata(o *core.HashMapOptions) {
-	var hc StringHandlerConfig
-	o.KeyConfig = hc
-}
-
-func WithStringValueMetadata(o *core.HashMapOptions) {
-	var hc StringHandlerConfig
-	o.ValueConfig = hc
-}
-
 type StringHandlerConfig struct{}
 
 func (StringHandlerConfig) Compare(a, b unsafe.Pointer) (match bool) {

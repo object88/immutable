@@ -19,18 +19,6 @@ func GetHandler() core.HandlerConfig {
 	return config
 }
 
-// WithIntKeyMetadata establishes the hydrator and dehydrator methods
-// for working with integer keys.
-func WithIntKeyMetadata(o *core.HashMapOptions) {
-	var ihc IntHandlerConfig
-	o.KeyConfig = ihc
-}
-
-func WithIntValueMetadata(o *core.HashMapOptions) {
-	var ihc IntHandlerConfig
-	o.ValueConfig = ihc
-}
-
 type IntHandlerConfig struct{}
 
 func (IntHandlerConfig) Compare(a, b unsafe.Pointer) (match bool) {

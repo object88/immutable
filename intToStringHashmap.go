@@ -16,8 +16,6 @@ type IntToStringHashmap struct {
 
 func NewIntToStringHashmap(contents map[int]string, options ...core.HashMapOption) *IntToStringHashmap {
 	opts := core.DefaultHashMapOptions()
-	integers.WithIntKeyMetadata(opts)
-	strings.WithStringValueMetadata(opts)
 	for _, fn := range options {
 		fn(opts)
 	}

@@ -272,7 +272,6 @@ func (h *HashMap) internalSet(config *core.HashmapConfig, key unsafe.Pointer, va
 	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
 	if b == nil {
-		// Create the bucket.
 		b = createEmptyBucket(config, hobSize)
 		h.buckets[selectedBucket] = b
 	}
