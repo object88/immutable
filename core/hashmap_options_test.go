@@ -7,8 +7,8 @@ import (
 	"github.com/object88/immutable/memory"
 )
 
-func Test_HashMapOptions_Defaults(t *testing.T) {
-	options := core.DefaultHashMapOptions()
+func Test_HashmapOptions_Defaults(t *testing.T) {
+	options := core.DefaultHashmapOptions()
 	if options == nil {
 		t.Fatalf("Default method returned nil\n")
 	}
@@ -17,8 +17,8 @@ func Test_HashMapOptions_Defaults(t *testing.T) {
 	}
 }
 
-func Test_HashMapOptions_WithBucketStrategy(t *testing.T) {
-	options := core.DefaultHashMapOptions()
+func Test_HashmapOptions_WithBucketStrategy(t *testing.T) {
+	options := core.DefaultHashmapOptions()
 	f := core.WithBucketStrategy(memory.ExtraLargeBlock)
 	if nil == f {
 		t.Fatalf("Fn returned from WithBucketStrategy is nil\n")
@@ -30,7 +30,7 @@ func Test_HashMapOptions_WithBucketStrategy(t *testing.T) {
 }
 
 func Test_HashmapOptions_CreateHashmapWithOptions(t *testing.T) {
-	options := core.DefaultHashMapOptions()
+	options := core.DefaultHashmapOptions()
 	fn := core.WithBucketStrategy(memory.ExtraLargeBlock)
 	fn(options)
 	if options.BucketStrategy != memory.ExtraLargeBlock {

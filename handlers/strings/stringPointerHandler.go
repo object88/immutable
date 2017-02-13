@@ -11,11 +11,11 @@ package strings
 //
 // // WithStringPointerKeyMetadata establishes the hydrator and dehydrator methods
 // // for working with integer keys.
-// func WithStringPointerKeyMetadata(o *core.HashMapOptions) {
+// func WithStringPointerKeyMetadata(o *core.HashmapOptions) {
 // 	o.KeyConfig = createOneStringPointerHandler()
 // }
 //
-// func WithStringPointerValueMetadata(o *core.HashMapOptions) {
+// func WithStringPointerValueMetadata(o *core.HashmapOptions) {
 // 	o.ValueConfig = createOneStringPointerHandler()
 // }
 //

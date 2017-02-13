@@ -2,6 +2,7 @@ package immutable
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"unsafe"
 
@@ -52,60 +53,60 @@ func (MyBadHandler) Write(memory unsafe.Pointer, index int, value unsafe.Pointer
 	m[index] = *(*int)(value)
 }
 
-func WithMyBadHandlerMetadata(o *core.HashMapOptions) {
-	var handler MyBadHandler
-	o.KeyConfig = handler
-	strings.WithStringValueMetadata(o)
-}
-
 func Test_Hashmap_CustomKey_BadHash_Iterate(t *testing.T) {
-	max := 100
-	data := make(map[int]string, max)
-	for i := 0; i < max; i++ {
-		data[i] = "0"
-	}
-	contents := make(map[unsafe.Pointer]unsafe.Pointer, max)
-	for k, v := range data {
-		key, value := k, v
-		contents[unsafe.Pointer(&key)] = unsafe.Pointer(&value)
-	}
-	original := NewHashMap(contents, WithMyBadHandlerMetadata)
-	if original == nil {
-		t.Fatal("NewHashMap returned nil\n")
-	}
+	original, config, data := createHashmapAndData()
+
 	size := original.Size()
 	if size != len(data) {
 		t.Fatalf("Incorrect size; expected %d, got %d\n", len(data), size)
 	}
-	original.ForEach(func(kp, _ unsafe.Pointer) {
+	original.ForEach(config, func(kp, _ unsafe.Pointer) {
 		k := *(*int)(kp)
-		if data[k] == "1" {
+		if data[k] == "visited" {
 			t.Fatalf("At %d, already visited\n", k)
 		}
-		data[k] = "1"
+		data[k] = "visited"
 	})
 
 	for k, v := range data {
-		if v != "1" {
+		if v != "visited" {
 			t.Fatalf("At %d, not visited\n", k)
 		}
 	}
 }
 
 func Test_Hashmap_CustomKey_BadHash_Get(t *testing.T) {
-	max := 100
-	contents := make(map[unsafe.Pointer]unsafe.Pointer, max)
-	for i := 0; i < max; i++ {
-		s := fmt.Sprintf("%d", i)
-		contents[unsafe.Pointer(&i)] = unsafe.Pointer(&s)
-	}
+	original, config, data := createHashmapAndData()
 
-	original := NewHashMap(contents, WithMyBadHandlerMetadata)
-
-	for k, v := range contents {
-		result, _, _ := original.Get(k)
-		if result != v {
-			t.Fatalf("At %d, expected %s, got %s\n%#v", k, *(*string)(v), *(*string)(result), original)
+	for k, v := range data {
+		rp, _, _ := original.Get(config, unsafe.Pointer(&k))
+		r := *(*string)(rp)
+		if r != v {
+			t.Fatalf("At %d, expected %s, got %s\n", k, v, r)
 		}
 	}
+}
+
+func createHashmapAndData() (*HashMap, *core.HashmapConfig, map[int]string) {
+	max := 100
+	data := make(map[int]string, max)
+	for i := 0; i < max; i++ {
+		data[i] = strconv.Itoa(i)
+	}
+
+	c := &core.HashmapConfig{
+		KeyConfig:   MyBadHandler{},
+		Options:     core.DefaultHashmapOptions(),
+		ValueConfig: strings.GetHandler(),
+	}
+
+	original := CreateEmptyHashmap(max)
+
+	for k, v := range data {
+		key, value := k, v
+		kp, vp := unsafe.Pointer(&key), unsafe.Pointer(&value)
+		original.internalSet(c, kp, vp)
+	}
+
+	return original, c, data
 }

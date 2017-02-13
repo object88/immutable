@@ -9,19 +9,14 @@ import (
 	"github.com/object88/immutable/hasher"
 )
 
-var config *core.HandlerConfig
+var config core.HandlerConfig
 var once sync.Once
 
-// WithIntKeyMetadata establishes the hydrator and dehydrator methods
-// for working with integer keys.
-func WithIntKeyMetadata(o *core.HashMapOptions) {
-	var ihc IntHandlerConfig
-	o.KeyConfig = ihc
-}
-
-func WithIntValueMetadata(o *core.HashMapOptions) {
-	var ihc IntHandlerConfig
-	o.ValueConfig = ihc
+func GetHandler() core.HandlerConfig {
+	once.Do(func() {
+		config = &IntHandlerConfig{}
+	})
+	return config
 }
 
 type IntHandlerConfig struct{}

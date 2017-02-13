@@ -11,23 +11,28 @@ import (
 
 type IntToStringHashmap struct {
 	h *HashMap
+	c *core.HashmapConfig
 }
 
-func NewIntToStringHashmap(contents map[int]string) *IntToStringHashmap {
-	opts := core.DefaultHashMapOptions()
-	integers.WithIntKeyMetadata(opts)
-	strings.WithStringValueMetadata(opts)
-	// for _, fn := range options {
-	// 	fn(opts)
-	// }
+func NewIntToStringHashmap(contents map[int]string, options ...core.HashmapOption) *IntToStringHashmap {
+	opts := core.DefaultHashmapOptions()
+	for _, fn := range options {
+		fn(opts)
+	}
 
-	hash := createHashMap(len(contents), opts)
+	c := &core.HashmapConfig{
+		KeyConfig:   integers.GetHandler(),
+		Options:     opts,
+		ValueConfig: strings.GetHandler(),
+	}
+
+	hash := CreateEmptyHashmap(len(contents))
 
 	for k, v := range contents {
 		key, value := k, v
-		hash.internalSet(unsafe.Pointer(&key), unsafe.Pointer(&value))
+		hash.internalSet(c, unsafe.Pointer(&key), unsafe.Pointer(&value))
 	}
-	return &IntToStringHashmap{hash}
+	return &IntToStringHashmap{hash, c}
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
@@ -35,14 +40,14 @@ func (hm *IntToStringHashmap) Filter(predicate func(key int, value string) (bool
 	if hm == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
-	newHashmap, err := hm.h.Filter(func(kp unsafe.Pointer, vp unsafe.Pointer) (bool, error) {
+	newHashmap, err := hm.h.Filter(hm.c, func(kp unsafe.Pointer, vp unsafe.Pointer) (bool, error) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		return predicate(key, value)
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &IntToStringHashmap{newHashmap}, nil
+	return &IntToStringHashmap{newHashmap, hm.c}, nil
 }
 
 // ForEach iterates over each key-value pair in this collection
@@ -50,7 +55,7 @@ func (hm *IntToStringHashmap) ForEach(predicate func(key int, value string)) {
 	if hm == nil {
 		return
 	}
-	hm.h.ForEach(func(kp unsafe.Pointer, vp unsafe.Pointer) {
+	hm.h.ForEach(hm.c, func(kp unsafe.Pointer, vp unsafe.Pointer) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		predicate(key, value)
 	})
@@ -61,7 +66,7 @@ func (hm *IntToStringHashmap) Get(key int) (value string, ok bool, err error) {
 		return "", false, errors.New("Pointer receiver is nil")
 	}
 	k := unsafe.Pointer(&key)
-	r, ok, err := hm.h.Get(k)
+	r, ok, err := hm.h.Get(hm.c, k)
 	if err != nil {
 		return "", false, err
 	}
@@ -77,7 +82,7 @@ func (hm *IntToStringHashmap) GetKeys() (results []int, err error) {
 		return nil, errors.New("Pointer receiver is nil")
 	}
 	var a []unsafe.Pointer
-	a, err = hm.h.GetKeys()
+	a, err = hm.h.GetKeys(hm.c)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +97,7 @@ func (hm *IntToStringHashmap) GoString() string {
 	if hm == nil {
 		return "(nil)"
 	}
-	return hm.h.GoString()
+	return hm.h.GoString(hm.c)
 }
 
 func (hm *IntToStringHashmap) Insert(key int, value string) (result *IntToStringHashmap, err error) {
@@ -100,21 +105,21 @@ func (hm *IntToStringHashmap) Insert(key int, value string) (result *IntToString
 		return nil, errors.New("Pointer receiver is nil")
 	}
 	kp, vp := unsafe.Pointer(&key), unsafe.Pointer(&value)
-	newHashmap, err := hm.h.Insert(kp, vp)
+	newHashmap, err := hm.h.Insert(hm.c, kp, vp)
 	if err != nil {
 		return nil, err
 	}
 	if newHashmap == hm.h {
 		return hm, nil
 	}
-	return &IntToStringHashmap{newHashmap}, nil
+	return &IntToStringHashmap{newHashmap, hm.c}, nil
 }
 
 func (hm *IntToStringHashmap) Map(predicate func(key int, value string) (result string, err error)) (*IntToStringHashmap, error) {
 	if hm == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
-	newHashmap, err := hm.h.Map(func(kp, vp unsafe.Pointer) (newv unsafe.Pointer, err error) {
+	newHashmap, err := hm.h.Map(hm.c, func(kp, vp unsafe.Pointer) (newv unsafe.Pointer, err error) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		newS, err := predicate(key, value)
 		if err != nil {
@@ -125,7 +130,7 @@ func (hm *IntToStringHashmap) Map(predicate func(key int, value string) (result 
 	if err != nil {
 		return nil, err
 	}
-	return &IntToStringHashmap{newHashmap}, nil
+	return &IntToStringHashmap{newHashmap, hm.c}, nil
 }
 
 func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(accumulator interface{}, key int, value string) (interface{}, error)) (result interface{}, err error) {
@@ -133,7 +138,7 @@ func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(acc
 		return nil, errors.New("Pointer receiver is nil")
 	}
 	acc := accumulator
-	_, err = hm.h.Reduce(func(ap unsafe.Pointer, kp, vp unsafe.Pointer) (unsafe.Pointer, error) {
+	_, err = hm.h.Reduce(hm.c, func(ap unsafe.Pointer, kp, vp unsafe.Pointer) (unsafe.Pointer, error) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		acc, err = predicate(acc, key, value)
 		return nil, err
@@ -152,14 +157,14 @@ func (hm *IntToStringHashmap) Remove(key int) (*IntToStringHashmap, error) {
 	}
 
 	kp := unsafe.Pointer(&key)
-	newHashmap, err := hm.h.Remove(kp)
+	newHashmap, err := hm.h.Remove(hm.c, kp)
 	if err != nil {
 		return nil, err
 	}
 	if newHashmap == hm.h {
 		return hm, nil
 	}
-	return &IntToStringHashmap{newHashmap}, nil
+	return &IntToStringHashmap{newHashmap, hm.c}, nil
 }
 
 func (hm *IntToStringHashmap) Size() int {
@@ -173,5 +178,5 @@ func (hm *IntToStringHashmap) String() string {
 	if hm == nil {
 		return "(nil)"
 	}
-	return hm.h.String()
+	return hm.h.String(hm.c)
 }

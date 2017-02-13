@@ -26,11 +26,11 @@ package booleans
 //
 // // WithBoolKeyMetadata establishes the hydrator and dehydrator methods
 // // for working with integer keys.
-// func WithBoolKeyMetadata(o *core.HashMapOptions) {
+// func WithBoolKeyMetadata(o *core.HashmapOptions) {
 // 	o.KeyConfig = createOneBoolHandler()
 // }
 //
-// func WithBoolValueMetadata(o *core.HashMapOptions) {
+// func WithBoolValueMetadata(o *core.HashmapOptions) {
 // 	o.ValueConfig = createOneBoolHandler()
 // }
 //
