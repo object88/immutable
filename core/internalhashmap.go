@@ -20,8 +20,8 @@ type bucket struct {
 	overflow   *bucket
 }
 
-// HashMap is a read-only key-to-value collection
-type HashMap struct {
+// InternalHashmap is a read-only key-to-value collection
+type InternalHashmap struct {
 	size    int
 	buckets []*bucket
 	lobMask uint32
@@ -34,9 +34,9 @@ const (
 	loadFactor     = 6.0
 )
 
-var emptyHashmap = &HashMap{0, nil, 0, 0, 0}
+var emptyHashmap = &InternalHashmap{0, nil, 0, 0, 0}
 
-func CreateEmptyHashmap(size int) *HashMap {
+func CreateEmptyInternalHashmap(size int) *InternalHashmap {
 	if size == 0 {
 		return emptyHashmap
 	}
@@ -51,11 +51,11 @@ func CreateEmptyHashmap(size int) *HashMap {
 	random := rand.New(src)
 	seed := uint32(random.Int31())
 
-	return &HashMap{initialCount, buckets, lobMask, lobSize, seed}
+	return &InternalHashmap{initialCount, buckets, lobMask, lobSize, seed}
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(config *HashmapConfig, key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
+func (h *InternalHashmap) Get(config *HashmapConfig, key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
 	if key == nil {
 		return nil, false, errors.New("Element is nil")
 	}
@@ -102,7 +102,7 @@ func (h *HashMap) Get(config *HashmapConfig, key unsafe.Pointer) (result unsafe.
 // GetKeys returns an array of keys in the hashmap.  If there are no entries,
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
-func (h *HashMap) GetKeys(config *HashmapConfig) (results []unsafe.Pointer, err error) {
+func (h *InternalHashmap) GetKeys(config *HashmapConfig) (results []unsafe.Pointer, err error) {
 	if h.size == 0 {
 		return []unsafe.Pointer{}, nil
 	}
@@ -124,9 +124,9 @@ func (h *HashMap) GetKeys(config *HashmapConfig) (results []unsafe.Pointer, err 
 	return results, nil
 }
 
-// GoString provides a programmatic view into a HashMap.  This may be used,
+// GoString provides a programmatic view into a InternalHashmap.  This may be used,
 // for example, with the '%#v' operand to fmt.Printf, fmt.Sprintf, etc.
-func (h *HashMap) GoString(config *HashmapConfig) string {
+func (h *InternalHashmap) GoString(config *HashmapConfig) string {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("Size: %d\n[\n", h.size))
 	for k, v := range h.buckets {
@@ -154,7 +154,7 @@ func (h *HashMap) GoString(config *HashmapConfig) string {
 	return buffer.String()
 }
 
-func (h *HashMap) iterate(config *HashmapConfig, abort <-chan struct{}) <-chan KeyValuePair {
+func (h *InternalHashmap) iterate(config *HashmapConfig, abort <-chan struct{}) <-chan KeyValuePair {
 	ch := make(chan KeyValuePair)
 
 	go func() {
@@ -181,25 +181,25 @@ func (h *HashMap) iterate(config *HashmapConfig, abort <-chan struct{}) <-chan K
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
-func (h *HashMap) Filter(config *HashmapConfig, predicate FilterPredicate) (*HashMap, error) {
+func (h *InternalHashmap) Filter(config *HashmapConfig, predicate FilterPredicate) (*InternalHashmap, error) {
 	b := &BaseStruct{h}
 	result, err := b.filter(config, predicate)
 	if err != nil {
 		return nil, err
 	}
-	return result.Base.(*HashMap), nil
+	return result.Base.(*InternalHashmap), nil
 }
 
 // ForEach iterates over each key-value pair in this collection
-func (h *HashMap) ForEach(config *HashmapConfig, predicate ForEachPredicate) {
+func (h *InternalHashmap) ForEach(config *HashmapConfig, predicate ForEachPredicate) {
 	b := &BaseStruct{h}
 	b.forEach(config, predicate)
 }
 
 // Insert returns a new collection with the provided key-value pair added.
-func (h *HashMap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
+func (h *InternalHashmap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) (*InternalHashmap, error) {
 	if h.size == 0 {
-		result := CreateEmptyHashmap(1)
+		result := CreateEmptyInternalHashmap(1)
 		result.InternalSet(config, key, value)
 		return result, nil
 	}
@@ -210,11 +210,11 @@ func (h *HashMap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe
 		return h, nil
 	}
 
-	var result *HashMap
+	var result *InternalHashmap
 	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
-		result = CreateEmptyHashmap(size)
+		result = CreateEmptyInternalHashmap(size)
 		for kvp := range h.iterate(config, abort) {
 			insertValue := kvp.Value
 			if config.KeyConfig.Compare(kvp.Key, key) {
@@ -224,7 +224,7 @@ func (h *HashMap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe
 		}
 	} else {
 		size++
-		result = CreateEmptyHashmap(size)
+		result = CreateEmptyInternalHashmap(size)
 		for kvp := range h.iterate(config, abort) {
 			result.InternalSet(config, kvp.Key, kvp.Value)
 		}
@@ -237,24 +237,24 @@ func (h *HashMap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe
 
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
-func (h *HashMap) Map(config *HashmapConfig, predicate MapPredicate) (*HashMap, error) {
+func (h *InternalHashmap) Map(config *HashmapConfig, predicate MapPredicate) (*InternalHashmap, error) {
 	b := &BaseStruct{h}
 	result, err := b.mapping(config, predicate)
 	if err != nil {
 		return nil, err
 	}
-	return result.Base.(*HashMap), nil
+	return result.Base.(*InternalHashmap), nil
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *HashMap) Reduce(config *HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
+func (h *InternalHashmap) Reduce(config *HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	b := &BaseStruct{h}
 	return b.reduce(config, predicate, accumulator)
 }
 
-// Remove returns a copy of the provided HashMap with the specified element
+// Remove returns a copy of the provided InternalHashmap with the specified element
 // removed.
-func (h *HashMap) Remove(config *HashmapConfig, key unsafe.Pointer) (*HashMap, error) {
+func (h *InternalHashmap) Remove(config *HashmapConfig, key unsafe.Pointer) (*InternalHashmap, error) {
 	if h.size == 0 {
 		return h, nil
 	}
@@ -265,10 +265,10 @@ func (h *HashMap) Remove(config *HashmapConfig, key unsafe.Pointer) (*HashMap, e
 
 	newSize := h.Size() - 1
 	if newSize == 0 {
-		return CreateEmptyHashmap(0), nil
+		return CreateEmptyInternalHashmap(0), nil
 	}
 
-	result := CreateEmptyHashmap(newSize)
+	result := CreateEmptyInternalHashmap(newSize)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(config, abort) {
 		if !config.KeyConfig.Compare(kvp.Key, key) {
@@ -280,11 +280,11 @@ func (h *HashMap) Remove(config *HashmapConfig, key unsafe.Pointer) (*HashMap, e
 }
 
 // Size returns the number of items in this collection
-func (h *HashMap) Size() int {
+func (h *InternalHashmap) Size() int {
 	return h.size
 }
 
-func (h *HashMap) String(config *HashmapConfig) string {
+func (h *InternalHashmap) String(config *HashmapConfig) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("Size: ")
 	buffer.WriteString(fmt.Sprintf("%d", h.size))
@@ -298,8 +298,8 @@ func (h *HashMap) String(config *HashmapConfig) string {
 	return buffer.String()
 }
 
-func (h *HashMap) instantiate(config *HashmapConfig, size int, contents []*KeyValuePair) *BaseStruct {
-	hash := CreateEmptyHashmap(size)
+func (h *InternalHashmap) instantiate(config *HashmapConfig, size int, contents []*KeyValuePair) *BaseStruct {
+	hash := CreateEmptyInternalHashmap(size)
 
 	for _, v := range contents {
 		if v != nil {
@@ -310,7 +310,7 @@ func (h *HashMap) instantiate(config *HashmapConfig, size int, contents []*KeyVa
 	return &BaseStruct{hash}
 }
 
-func (h *HashMap) InternalSet(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) {
+func (h *InternalHashmap) InternalSet(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) {
 	hobSize := uint32(64 - h.lobSize)
 
 	hashkey := config.KeyConfig.Hash(key, h.seed)

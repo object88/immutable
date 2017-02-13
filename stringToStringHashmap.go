@@ -9,7 +9,7 @@ package immutable
 // )
 //
 // type StringToStringHashmap struct {
-// 	h *HashMap
+// 	h *InternalHashmap
 // }
 //
 // func NewStringToStringHashmap(contents map[string]string) *StringToStringHashmap {
@@ -20,7 +20,7 @@ package immutable
 // 	// 	fn(opts)
 // 	// }
 //
-// 	hash := CreateEmptyHashmap(len(contents), opts)
+// 	hash := CreateEmptyInternalHashmap(len(contents), opts)
 //
 // 	for k, v := range contents {
 // 		key, value := k, v

@@ -10,7 +10,7 @@ import (
 )
 
 type IntToStringHashmap struct {
-	h *core.HashMap
+	h *core.InternalHashmap
 	c *core.HashmapConfig
 }
 
@@ -26,7 +26,7 @@ func NewIntToStringHashmap(contents map[int]string, options ...core.HashmapOptio
 		ValueConfig: strings.GetHandler(),
 	}
 
-	hash := core.CreateEmptyHashmap(len(contents))
+	hash := core.CreateEmptyInternalHashmap(len(contents))
 
 	for k, v := range contents {
 		key, value := k, v
@@ -149,7 +149,7 @@ func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(acc
 	return acc, nil
 }
 
-// Remove returns a copy of the provided HashMap with the specified element
+// Remove returns a copy of the provided InternalHashmap with the specified element
 // removed.
 func (hm *IntToStringHashmap) Remove(key int) (*IntToStringHashmap, error) {
 	if hm == nil {
