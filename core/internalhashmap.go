@@ -1,13 +1,14 @@
-package immutable
+package core
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
 	"unsafe"
 
-	"github.com/object88/immutable/core"
 	"github.com/object88/immutable/memory"
 )
 
@@ -54,7 +55,7 @@ func CreateEmptyHashmap(size int) *HashMap {
 }
 
 // Get returns the value for the given key
-func (h *HashMap) Get(config *core.HashmapConfig, key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
+func (h *HashMap) Get(config *HashmapConfig, key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
 	if key == nil {
 		return nil, false, errors.New("Element is nil")
 	}
@@ -101,7 +102,7 @@ func (h *HashMap) Get(config *core.HashmapConfig, key unsafe.Pointer) (result un
 // GetKeys returns an array of keys in the hashmap.  If there are no entries,
 // then an empty array is returned.  If the pointer reciever is nil, then
 // nil is returned.  The array of keys is not ordered.
-func (h *HashMap) GetKeys(config *core.HashmapConfig) (results []unsafe.Pointer, err error) {
+func (h *HashMap) GetKeys(config *HashmapConfig) (results []unsafe.Pointer, err error) {
 	if h.size == 0 {
 		return []unsafe.Pointer{}, nil
 	}
@@ -123,8 +124,38 @@ func (h *HashMap) GetKeys(config *core.HashmapConfig) (results []unsafe.Pointer,
 	return results, nil
 }
 
-func (h *HashMap) iterate(config *core.HashmapConfig, abort <-chan struct{}) <-chan core.KeyValuePair {
-	ch := make(chan core.KeyValuePair)
+// GoString provides a programmatic view into a HashMap.  This may be used,
+// for example, with the '%#v' operand to fmt.Printf, fmt.Sprintf, etc.
+func (h *HashMap) GoString(config *HashmapConfig) string {
+	var buffer bytes.Buffer
+	buffer.WriteString(fmt.Sprintf("Size: %d\n[\n", h.size))
+	for k, v := range h.buckets {
+		b := v
+		if b == nil {
+			buffer.WriteString(fmt.Sprintf("  bucket #%d: nil\n", k))
+			continue
+		}
+		buffer.WriteString(fmt.Sprintf("  bucket #%d: {\n    entryCount: %d\n    entries: [\n", k, b.entryCount))
+		for b != nil {
+			for i := 0; i < int(b.entryCount); i++ {
+				key := config.KeyConfig.Read(b.keys, i)
+				value := config.ValueConfig.Read(b.values, i)
+
+				ks := config.KeyConfig.Format(key)
+				vs := config.ValueConfig.Format(value)
+				buffer.WriteString(fmt.Sprintf("      [0x%016x,%s] -> %s\n", b.hobs.Read(uint64(i)), ks, vs))
+			}
+
+			b = b.overflow
+		}
+		buffer.WriteString("    ]\n  },\n")
+	}
+	buffer.WriteString("]\n")
+	return buffer.String()
+}
+
+func (h *HashMap) iterate(config *HashmapConfig, abort <-chan struct{}) <-chan KeyValuePair {
+	ch := make(chan KeyValuePair)
 
 	go func() {
 		defer close(ch)
@@ -136,7 +167,7 @@ func (h *HashMap) iterate(config *core.HashmapConfig, abort <-chan struct{}) <-c
 					v := config.ValueConfig.Read(b.values, j)
 
 					select {
-					case ch <- core.KeyValuePair{Key: k, Value: v}:
+					case ch <- KeyValuePair{Key: k, Value: v}:
 					case <-abort:
 						return
 					}
@@ -150,7 +181,7 @@ func (h *HashMap) iterate(config *core.HashmapConfig, abort <-chan struct{}) <-c
 }
 
 // Filter returns a subset of the collection, based on the predicate supplied
-func (h *HashMap) Filter(config *core.HashmapConfig, predicate FilterPredicate) (*HashMap, error) {
+func (h *HashMap) Filter(config *HashmapConfig, predicate FilterPredicate) (*HashMap, error) {
 	b := &BaseStruct{h}
 	result, err := b.filter(config, predicate)
 	if err != nil {
@@ -160,16 +191,16 @@ func (h *HashMap) Filter(config *core.HashmapConfig, predicate FilterPredicate) 
 }
 
 // ForEach iterates over each key-value pair in this collection
-func (h *HashMap) ForEach(config *core.HashmapConfig, predicate ForEachPredicate) {
+func (h *HashMap) ForEach(config *HashmapConfig, predicate ForEachPredicate) {
 	b := &BaseStruct{h}
 	b.forEach(config, predicate)
 }
 
 // Insert returns a new collection with the provided key-value pair added.
-func (h *HashMap) Insert(config *core.HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
+func (h *HashMap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
 	if h.size == 0 {
 		result := CreateEmptyHashmap(1)
-		result.internalSet(config, key, value)
+		result.InternalSet(config, key, value)
 		return result, nil
 	}
 
@@ -189,16 +220,16 @@ func (h *HashMap) Insert(config *core.HashmapConfig, key unsafe.Pointer, value u
 			if config.KeyConfig.Compare(kvp.Key, key) {
 				insertValue = value
 			}
-			result.internalSet(config, kvp.Key, insertValue)
+			result.InternalSet(config, kvp.Key, insertValue)
 		}
 	} else {
 		size++
 		result = CreateEmptyHashmap(size)
 		for kvp := range h.iterate(config, abort) {
-			result.internalSet(config, kvp.Key, kvp.Value)
+			result.InternalSet(config, kvp.Key, kvp.Value)
 		}
 
-		result.internalSet(config, key, value)
+		result.InternalSet(config, key, value)
 	}
 
 	return result, nil
@@ -206,7 +237,7 @@ func (h *HashMap) Insert(config *core.HashmapConfig, key unsafe.Pointer, value u
 
 // Map iterates over the contents of a collection and calls the supplied predicate.
 // The return value is a new map with the results of the predicate function.
-func (h *HashMap) Map(config *core.HashmapConfig, predicate MapPredicate) (*HashMap, error) {
+func (h *HashMap) Map(config *HashmapConfig, predicate MapPredicate) (*HashMap, error) {
 	b := &BaseStruct{h}
 	result, err := b.mapping(config, predicate)
 	if err != nil {
@@ -216,14 +247,14 @@ func (h *HashMap) Map(config *core.HashmapConfig, predicate MapPredicate) (*Hash
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *HashMap) Reduce(config *core.HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
+func (h *HashMap) Reduce(config *HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
 	b := &BaseStruct{h}
 	return b.reduce(config, predicate, accumulator)
 }
 
 // Remove returns a copy of the provided HashMap with the specified element
 // removed.
-func (h *HashMap) Remove(config *core.HashmapConfig, key unsafe.Pointer) (*HashMap, error) {
+func (h *HashMap) Remove(config *HashmapConfig, key unsafe.Pointer) (*HashMap, error) {
 	if h.size == 0 {
 		return h, nil
 	}
@@ -241,7 +272,7 @@ func (h *HashMap) Remove(config *core.HashmapConfig, key unsafe.Pointer) (*HashM
 	abort := make(chan struct{})
 	for kvp := range h.iterate(config, abort) {
 		if !config.KeyConfig.Compare(kvp.Key, key) {
-			result.internalSet(config, kvp.Key, kvp.Value)
+			result.InternalSet(config, kvp.Key, kvp.Value)
 		}
 	}
 
@@ -253,19 +284,33 @@ func (h *HashMap) Size() int {
 	return h.size
 }
 
-func (h *HashMap) instantiate(config *core.HashmapConfig, size int, contents []*core.KeyValuePair) *BaseStruct {
+func (h *HashMap) String(config *HashmapConfig) string {
+	var buffer bytes.Buffer
+	buffer.WriteString("Size: ")
+	buffer.WriteString(fmt.Sprintf("%d", h.size))
+	buffer.WriteString("\n[\n")
+	h.ForEach(config, func(k unsafe.Pointer, v unsafe.Pointer) {
+		ks := config.KeyConfig.Format(k)
+		vs := config.ValueConfig.Format(v)
+		buffer.WriteString(fmt.Sprintf("  %s: %s\n", ks, vs))
+	})
+	buffer.WriteString("]\n")
+	return buffer.String()
+}
+
+func (h *HashMap) instantiate(config *HashmapConfig, size int, contents []*KeyValuePair) *BaseStruct {
 	hash := CreateEmptyHashmap(size)
 
 	for _, v := range contents {
 		if v != nil {
-			hash.internalSet(config, v.Key, v.Value)
+			hash.InternalSet(config, v.Key, v.Value)
 		}
 	}
 
 	return &BaseStruct{hash}
 }
 
-func (h *HashMap) internalSet(config *core.HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) {
+func (h *HashMap) InternalSet(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) {
 	hobSize := uint32(64 - h.lobSize)
 
 	hashkey := config.KeyConfig.Hash(key, h.seed)
@@ -288,7 +333,7 @@ func (h *HashMap) internalSet(config *core.HashmapConfig, key unsafe.Pointer, va
 	b.entryCount++
 }
 
-func createEmptyBucket(config *core.HashmapConfig, hobSize uint32) *bucket {
+func createEmptyBucket(config *HashmapConfig, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
 		hobs:       memory.AllocateMemories(config.Options.BucketStrategy, hobSize, bucketCapacity),

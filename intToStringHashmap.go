@@ -10,7 +10,7 @@ import (
 )
 
 type IntToStringHashmap struct {
-	h *HashMap
+	h *core.HashMap
 	c *core.HashmapConfig
 }
 
@@ -26,11 +26,11 @@ func NewIntToStringHashmap(contents map[int]string, options ...core.HashmapOptio
 		ValueConfig: strings.GetHandler(),
 	}
 
-	hash := CreateEmptyHashmap(len(contents))
+	hash := core.CreateEmptyHashmap(len(contents))
 
 	for k, v := range contents {
 		key, value := k, v
-		hash.internalSet(c, unsafe.Pointer(&key), unsafe.Pointer(&value))
+		hash.InternalSet(c, unsafe.Pointer(&key), unsafe.Pointer(&value))
 	}
 	return &IntToStringHashmap{hash, c}
 }
