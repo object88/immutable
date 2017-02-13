@@ -34,20 +34,18 @@ const (
 	loadFactor     = 6.0
 )
 
-// NewHashMap creates a new instance of a HashMap
-func NewHashMap(contents map[unsafe.Pointer]unsafe.Pointer, options ...core.HashMapOption) *HashMap {
-	opts := core.DefaultHashMapOptions()
-	for _, fn := range options {
-		fn(opts)
-	}
+func CreateEmptyHashmap(size int, options *core.HashMapOptions) *HashMap {
+	initialCount := size
+	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
+	lobSize := memory.PowerOf(initialSize)
+	lobMask := uint32(^(0xffffffff << lobSize))
+	buckets := make([]*bucket, initialSize)
 
-	hash := createHashMap(len(contents), opts)
+	src := rand.NewSource(time.Now().UnixNano())
+	random := rand.New(src)
+	seed := uint32(random.Int31())
 
-	for k, v := range contents {
-		hash.internalSet(k, v)
-	}
-
-	return hash
+	return &HashMap{options, initialCount, buckets, lobMask, lobSize, seed}
 }
 
 // Get returns the value for the given key
@@ -87,7 +85,6 @@ func (h *HashMap) Get(key unsafe.Pointer) (result unsafe.Pointer, ok bool, err e
 			// 	k, key)
 			if h.options.KeyConfig.CompareTo(b.keys, index, key) {
 				v := h.options.ValueConfig.Read(b.values, index)
-
 				return v, true, nil
 			}
 		}
@@ -166,7 +163,7 @@ func (h *HashMap) ForEach(predicate ForEachPredicate) {
 // Insert returns a new collection with the provided key-value pair added.
 func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, error) {
 	if h.size == 0 {
-		result := createHashMap(1, h.options)
+		result := CreateEmptyHashmap(1, h.options)
 		result.internalSet(key, value)
 		return result, nil
 	}
@@ -181,7 +178,7 @@ func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, er
 	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
-		result = createHashMap(size, h.options)
+		result = CreateEmptyHashmap(size, h.options)
 		for kvp := range h.iterate(abort) {
 			insertValue := kvp.Value
 			if h.options.KeyConfig.Compare(kvp.Key, key) {
@@ -191,7 +188,7 @@ func (h *HashMap) Insert(key unsafe.Pointer, value unsafe.Pointer) (*HashMap, er
 		}
 	} else {
 		size++
-		result = createHashMap(size, h.options)
+		result = CreateEmptyHashmap(size, h.options)
 		for kvp := range h.iterate(abort) {
 			result.internalSet(kvp.Key, kvp.Value)
 		}
@@ -230,12 +227,12 @@ func (h *HashMap) Remove(key unsafe.Pointer) (*HashMap, error) {
 		return h, nil
 	}
 
-	size := h.Size() - 1
-	if size == 0 {
-		return createHashMap(0, h.options), nil
+	newSize := h.Size() - 1
+	if newSize == 0 {
+		return CreateEmptyHashmap(0, h.options), nil
 	}
 
-	result := createHashMap(size, h.options)
+	result := CreateEmptyHashmap(newSize, h.options)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(abort) {
 		if !h.options.KeyConfig.Compare(kvp.Key, key) {
@@ -252,7 +249,7 @@ func (h *HashMap) Size() int {
 }
 
 func (h *HashMap) instantiate(size int, contents []*core.KeyValuePair) *BaseStruct {
-	hash := createHashMap(size, h.options)
+	hash := CreateEmptyHashmap(size, h.options)
 
 	for _, v := range contents {
 		if v != nil {
@@ -285,20 +282,6 @@ func (h *HashMap) internalSet(key unsafe.Pointer, value unsafe.Pointer) {
 	h.options.ValueConfig.Write(b.values, index, value)
 	b.hobs.Assign(uint64(b.entryCount), hashkey>>h.lobSize)
 	b.entryCount++
-}
-
-func createHashMap(size int, options *core.HashMapOptions) *HashMap {
-	initialCount := size
-	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
-	lobSize := memory.PowerOf(initialSize)
-	lobMask := uint32(^(0xffffffff << lobSize))
-	buckets := make([]*bucket, initialSize)
-
-	src := rand.NewSource(time.Now().UnixNano())
-	random := rand.New(src)
-	seed := uint32(random.Int31())
-
-	return &HashMap{options, initialCount, buckets, lobMask, lobSize, seed}
 }
 
 func createEmptyBucket(options *core.HashMapOptions, hobSize uint32) *bucket {

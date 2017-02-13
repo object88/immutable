@@ -13,15 +13,15 @@ type IntToStringHashmap struct {
 	h *HashMap
 }
 
-func NewIntToStringHashmap(contents map[int]string) *IntToStringHashmap {
+func NewIntToStringHashmap(contents map[int]string, options ...core.HashMapOption) *IntToStringHashmap {
 	opts := core.DefaultHashMapOptions()
 	integers.WithIntKeyMetadata(opts)
 	strings.WithStringValueMetadata(opts)
-	// for _, fn := range options {
-	// 	fn(opts)
-	// }
+	for _, fn := range options {
+		fn(opts)
+	}
 
-	hash := createHashMap(len(contents), opts)
+	hash := CreateEmptyHashmap(len(contents), opts)
 
 	for k, v := range contents {
 		key, value := k, v

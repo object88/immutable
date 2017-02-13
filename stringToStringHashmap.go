@@ -20,7 +20,7 @@ func NewStringToStringHashmap(contents map[string]string) *StringToStringHashmap
 	// 	fn(opts)
 	// }
 
-	hash := createHashMap(len(contents), opts)
+	hash := CreateEmptyHashmap(len(contents), opts)
 
 	for k, v := range contents {
 		key, value := k, v
