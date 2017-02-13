@@ -13,7 +13,7 @@ package immutable
 // }
 //
 // func NewStringToStringHashmap(contents map[string]string) *StringToStringHashmap {
-// 	opts := core.DefaultHashMapOptions()
+// 	opts := core.DefaultHashmapOptions()
 // 	strings.WithStringKeyMetadata(opts)
 // 	strings.WithStringValueMetadata(opts)
 // 	// for _, fn := range options {

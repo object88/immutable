@@ -291,7 +291,7 @@ func (h *HashMap) internalSet(config *core.HashmapConfig, key unsafe.Pointer, va
 func createEmptyBucket(config *core.HashmapConfig, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
-		hobs:       memory.AllocateMemories(memory.LargeBlock, hobSize, bucketCapacity),
+		hobs:       memory.AllocateMemories(config.Options.BucketStrategy, hobSize, bucketCapacity),
 		keys:       config.KeyConfig.CreateBucket(bucketCapacity),
 		values:     config.ValueConfig.CreateBucket(bucketCapacity),
 		overflow:   nil,

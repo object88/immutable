@@ -4,6 +4,7 @@ import "unsafe"
 
 type HashmapConfig struct {
 	KeyConfig   HandlerConfig
+	Options     *HashmapOptions
 	ValueConfig HandlerConfig
 }
 

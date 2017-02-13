@@ -96,6 +96,7 @@ func createHashmapAndData() (*HashMap, *core.HashmapConfig, map[int]string) {
 
 	c := &core.HashmapConfig{
 		KeyConfig:   MyBadHandler{},
+		Options:     core.DefaultHashmapOptions(),
 		ValueConfig: strings.GetHandler(),
 	}
 

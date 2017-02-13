@@ -14,14 +14,15 @@ type IntToStringHashmap struct {
 	c *core.HashmapConfig
 }
 
-func NewIntToStringHashmap(contents map[int]string, options ...core.HashMapOption) *IntToStringHashmap {
-	opts := core.DefaultHashMapOptions()
+func NewIntToStringHashmap(contents map[int]string, options ...core.HashmapOption) *IntToStringHashmap {
+	opts := core.DefaultHashmapOptions()
 	for _, fn := range options {
 		fn(opts)
 	}
 
 	c := &core.HashmapConfig{
 		KeyConfig:   integers.GetHandler(),
+		Options:     opts,
 		ValueConfig: strings.GetHandler(),
 	}
 
