@@ -40,7 +40,7 @@ func (hm *IntToStringHashmap) Filter(predicate func(key int, value string) (bool
 	if hm == nil {
 		return nil, errors.New("Pointer receiver is nil")
 	}
-	newHashmap, err := hm.h.Filter(hm.c, func(kp unsafe.Pointer, vp unsafe.Pointer) (bool, error) {
+	newHashmap, err := hm.h.Filter(hm.c, func(kp, vp unsafe.Pointer) (bool, error) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		return predicate(key, value)
 	})
@@ -55,7 +55,7 @@ func (hm *IntToStringHashmap) ForEach(predicate func(key int, value string)) {
 	if hm == nil {
 		return
 	}
-	hm.h.ForEach(hm.c, func(kp unsafe.Pointer, vp unsafe.Pointer) {
+	hm.h.ForEach(hm.c, func(kp, vp unsafe.Pointer) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		predicate(key, value)
 	})
@@ -138,7 +138,7 @@ func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(acc
 		return nil, errors.New("Pointer receiver is nil")
 	}
 	acc := accumulator
-	_, err = hm.h.Reduce(hm.c, func(ap unsafe.Pointer, kp, vp unsafe.Pointer) (unsafe.Pointer, error) {
+	_, err = hm.h.Reduce(hm.c, func(ap, kp, vp unsafe.Pointer) (unsafe.Pointer, error) {
 		key, value := *(*int)(kp), *(*string)(vp)
 		acc, err = predicate(acc, key, value)
 		return nil, err
