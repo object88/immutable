@@ -251,9 +251,9 @@ func (h *InternalHashmap) Map(config *HashmapConfig, predicate MapPredicate) (*I
 }
 
 // Reduce operates over the collection contents to produce a single value
-func (h *InternalHashmap) Reduce(config *HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
+func (h *InternalHashmap) Reduce(config *HashmapConfig, predicate ReducePredicate) error {
 	b := &BaseStruct{h}
-	return b.reduce(config, predicate, accumulator)
+	return b.reduce(config, predicate)
 }
 
 // Remove returns a copy of the provided InternalHashmap with the specified element
