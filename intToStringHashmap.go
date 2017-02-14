@@ -26,7 +26,7 @@ func NewIntToStringHashmap(contents map[int]string, options ...core.HashmapOptio
 		ValueConfig: strings.GetHandler(),
 	}
 
-	hash := core.CreateEmptyInternalHashmap(len(contents))
+	hash := core.CreateEmptyInternalHashmap(opts.PackedBucket, len(contents))
 
 	for k, v := range contents {
 		key, value := k, v
