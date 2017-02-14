@@ -76,7 +76,7 @@ func Test_ExtraLarge_AllocateMemories(t *testing.T) {
 	}
 }
 
-func Test_NoPacking_AllocateMemories(t *testing.T) {
+func Test_ExtraLargeNoPacking_AllocateMemories(t *testing.T) {
 	testCases := []struct {
 		count    uint32
 		expected int
@@ -87,8 +87,8 @@ func Test_NoPacking_AllocateMemories(t *testing.T) {
 	}
 	for index, tc := range testCases {
 		t.Run(fmt.Sprintf("%d", index), func(t *testing.T) {
-			m := AllocateMemories(NoPacking, 0, tc.count)
-			mem := m.(*MemoriesNoPacking).m
+			m := AllocateMemories(ExtraLargeBlockNoPacking, 0, tc.count)
+			mem := m.(*Memories64NoPacking).m
 			evaluate(t, len(mem), tc.expected)
 		})
 	}

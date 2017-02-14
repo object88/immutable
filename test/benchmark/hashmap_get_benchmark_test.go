@@ -22,7 +22,7 @@ var contents map[int]string
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-var hashmapSmallBlock, hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.IntToStringHashmap
+var hashmapSmallBlock, hashmapLargeBlock, hashmapExtraLargeBlock, hashmapExtraLargeBlockNoPacked *immutable.IntToStringHashmap
 
 func init() {
 	stringLength := 100
@@ -35,7 +35,7 @@ func init() {
 	hashmapSmallBlock = createWithStragety(memory.SmallBlock)
 	hashmapLargeBlock = createWithStragety(memory.LargeBlock)
 	hashmapExtraLargeBlock = createWithStragety(memory.ExtraLargeBlock)
-	hashmapNoPacked = createWithStragety(memory.NoPacking)
+	hashmapExtraLargeBlockNoPacked = createWithStragety(memory.ExtraLargeBlockNoPacking)
 }
 
 func Benchmark_Hashmap_Get_SmallBlock(b *testing.B) {
@@ -58,7 +58,7 @@ func Benchmark_Hashmap_Get_ExtraLargeBlock(b *testing.B) {
 
 func Benchmark_Hashmap_Get_NoPacking(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		testStrategy(hashmapNoPacked)
+		testStrategy(hashmapExtraLargeBlockNoPacked)
 	}
 }
 

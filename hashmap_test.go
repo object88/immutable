@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_Hashmap(t *testing.T) {
+func Test_Hashmap_Simple(t *testing.T) {
 	data := map[int]string{
 		1:  "aa",
 		2:  "bb",
@@ -18,6 +18,7 @@ func Test_Hashmap(t *testing.T) {
 		26: "zz",
 	}
 	original := NewIntToStringHashmap(data)
+	fmt.Printf("Map: %s\n", original.GoString())
 	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}

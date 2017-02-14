@@ -22,11 +22,12 @@ type bucket struct {
 
 // InternalHashmap is a read-only key-to-value collection
 type InternalHashmap struct {
-	size    int
-	buckets []*bucket
-	lobMask uint32
-	lobSize uint8
-	seed    uint32
+	size      int
+	buckets   []*bucket
+	lobMask   uint32
+	lobSize   uint8
+	seed      uint32
+	blockSize memory.BlockSize
 }
 
 const (
@@ -34,7 +35,7 @@ const (
 	loadFactor     = 6.0
 )
 
-var emptyHashmap = &InternalHashmap{0, nil, 0, 0, 0}
+var emptyHashmap = &InternalHashmap{0, nil, 0, 0, 0, memory.SmallBlockNoPacking}
 
 func CreateEmptyInternalHashmap(size int) *InternalHashmap {
 	if size == 0 {
@@ -47,11 +48,15 @@ func CreateEmptyInternalHashmap(size int) *InternalHashmap {
 	lobMask := uint32(^(0xffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
 
+	hobSize := 32 - lobSize
+	blockSize := memory.SelectBlockSize(false, hobSize)
+	fmt.Printf("Size: %d, bucket count: %d, lobSize: %d, hobSize: %d, blockSize: %s\n", size, initialSize, lobSize, hobSize, blockSize)
+
 	src := rand.NewSource(time.Now().UnixNano())
 	random := rand.New(src)
 	seed := uint32(random.Int31())
 
-	return &InternalHashmap{initialCount, buckets, lobMask, lobSize, seed}
+	return &InternalHashmap{initialCount, buckets, lobMask, lobSize, seed, blockSize}
 }
 
 // Get returns the value for the given key
@@ -317,12 +322,12 @@ func (h *InternalHashmap) InternalSet(config *HashmapConfig, key unsafe.Pointer,
 	selectedBucket := hashkey & uint64(h.lobMask)
 	b := h.buckets[selectedBucket]
 	if b == nil {
-		b = createEmptyBucket(config, hobSize)
+		b = h.createEmptyBucket(config, hobSize)
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
-			b.overflow = createEmptyBucket(config, hobSize)
+			b.overflow = h.createEmptyBucket(config, hobSize)
 		}
 		b = b.overflow
 	}
@@ -333,10 +338,10 @@ func (h *InternalHashmap) InternalSet(config *HashmapConfig, key unsafe.Pointer,
 	b.entryCount++
 }
 
-func createEmptyBucket(config *HashmapConfig, hobSize uint32) *bucket {
+func (h *InternalHashmap) createEmptyBucket(config *HashmapConfig, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
-		hobs:       memory.AllocateMemories(config.Options.BucketStrategy, hobSize, bucketCapacity),
+		hobs:       memory.AllocateMemories(h.blockSize, hobSize, bucketCapacity),
 		keys:       config.KeyConfig.CreateBucket(bucketCapacity),
 		values:     config.ValueConfig.CreateBucket(bucketCapacity),
 		overflow:   nil,
