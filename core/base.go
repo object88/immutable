@@ -62,16 +62,15 @@ func (b *BaseStruct) mapping(config *HashmapConfig, predicate MapPredicate) (*Ba
 	return mutated, nil
 }
 
-func (b *BaseStruct) reduce(config *HashmapConfig, predicate ReducePredicate, accumulator unsafe.Pointer) (unsafe.Pointer, error) {
-	acc := accumulator
+func (b *BaseStruct) reduce(config *HashmapConfig, predicate ReducePredicate) error {
 	var err error
 	abort := make(chan struct{})
 	for kvp := range b.iterate(config, abort) {
-		acc, err = predicate(acc, kvp.Key, kvp.Value)
+		err = predicate(kvp.Key, kvp.Value)
 		if err != nil {
 			close(abort)
-			return nil, err
+			return err
 		}
 	}
-	return acc, nil
+	return nil
 }

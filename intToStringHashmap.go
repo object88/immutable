@@ -138,11 +138,11 @@ func (hm *IntToStringHashmap) Reduce(accumulator interface{}, predicate func(acc
 		return nil, errors.New("Pointer receiver is nil")
 	}
 	acc := accumulator
-	_, err = hm.h.Reduce(hm.c, func(ap, kp, vp unsafe.Pointer) (unsafe.Pointer, error) {
+	err = hm.h.Reduce(hm.c, func(kp, vp unsafe.Pointer) error {
 		key, value := *(*int)(kp), *(*string)(vp)
 		acc, err = predicate(acc, key, value)
-		return nil, err
-	}, nil)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}

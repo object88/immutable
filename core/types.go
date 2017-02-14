@@ -33,4 +33,4 @@ type ForEachPredicate func(key unsafe.Pointer, value unsafe.Pointer)
 type MapPredicate func(key unsafe.Pointer, value unsafe.Pointer) (unsafe.Pointer, error)
 
 // ReducePredicate describes the predicate function used by the Reduce method
-type ReducePredicate func(accumulator unsafe.Pointer, key unsafe.Pointer, value unsafe.Pointer) (unsafe.Pointer, error)
+type ReducePredicate func(key unsafe.Pointer, value unsafe.Pointer) error
