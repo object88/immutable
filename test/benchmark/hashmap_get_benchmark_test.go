@@ -18,95 +18,53 @@ const (
 )
 
 var max = []int{5, 50, 500, 5000, 50000, 500000, 5000000}
-
-var keys []int
-var contents map[int]string
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-func init() {
+func Benchmark_Hashmap_Get_One(b *testing.B) {
+	hashmapSizes := []int{5, 50, 500, 5000, 50000, 500000, 5000000}
 	stringLength := 100
-	contents = make(map[int]string, max[len(max)-1])
-	keys = make([]int, max[len(max)-1])
-	for j := 0; j < max[len(max)-1]; j++ {
-		k := int(src.Int63())
-		keys[j] = k
-		contents[k] = generateString(stringLength)
-	}
-}
-
-func Benchmark_Hashmap_Get_PackedBlock(b *testing.B) {
-	for _, tc := range max {
-		data := prepareData(tc)
-		hashmap := createWithStragety(data, true)
-		b.Run(fmt.Sprintf("n=%d", tc), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				testStrategy(hashmap)
-			}
-		})
-	}
-}
-
-func Benchmark_Hashmap_Get_NotPackedBlock(b *testing.B) {
-	for _, tc := range max {
-		data := prepareData(tc)
-		hashmap := createWithStragety(data, false)
-		b.Run(fmt.Sprintf("n=%d", tc), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				testStrategy(hashmap)
-			}
-		})
-	}
-}
-
-func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
-	for _, tc := range max {
-		data := prepareData(tc)
-		b.Run(fmt.Sprintf("n=%d", tc), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
-				var r string
-				for _, key := range keys {
-					r = getStringFromMap(data, key)
-				}
-				result = r
-			}
-		})
-	}
-}
-
-func getStringFromMap(data map[int]string, key int) string {
-	s := data[key]
-	return s
-}
-
-func createWithStragety(contents map[int]string, packed bool) *immutable.IntToStringHashmap {
-	return immutable.NewIntToStringHashmap(contents, core.WithBucketStrategy(packed))
-}
-
-func testStrategy(original *immutable.IntToStringHashmap) {
-	var r string
-	for _, key := range keys {
-		r = getStringFromImmutable(original, key)
-	}
-	result = r
-}
-
-func getStringFromImmutable(original *immutable.IntToStringHashmap, key int) string {
-	s, _, _ := original.Get(key)
-	return s
-}
-
-func prepareData(tc int) map[int]string {
-	var data map[int]string
-	if tc == max[len(max)-1] {
-		data = contents
-	} else {
-		data = make(map[int]string, tc)
-		for i := 0; i < tc; i++ {
-			data[i] = contents[i]
+	for _, hashmapSize := range hashmapSizes {
+		contents := make(map[int]string, hashmapSize)
+		key := int(src.Int63())
+		contents[key] = generateString(stringLength)
+		for len(contents) < hashmapSize {
+			k := int(src.Int63())
+			contents[k] = generateString(stringLength)
 		}
+
+		b.Run(fmt.Sprintf("n=%d/Packed", hashmapSize), func(b *testing.B) {
+			hashmap := immutable.NewIntToStringHashmap(contents, core.WithBucketStrategy(true))
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				testStrategy(key, hashmap)
+			}
+		})
+
+		b.Run(fmt.Sprintf("n=%d/Unpacked", hashmapSize), func(b *testing.B) {
+			hashmap := immutable.NewIntToStringHashmap(contents, core.WithBucketStrategy(false))
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				testStrategy(key, hashmap)
+			}
+		})
+
+		b.Run(fmt.Sprintf("n=%d/Native", hashmapSize), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				testNative(key, contents)
+			}
+		})
 	}
-	return data
+}
+
+func testNative(key int, data map[int]string) {
+	s := data[key]
+	result = s
+}
+
+func testStrategy(key int, original *immutable.IntToStringHashmap) {
+	s, _, _ := original.Get(key)
+	result = s
 }
 
 // This code copied directly from StackOverflow; see randStringBytesMaskImprSrc
