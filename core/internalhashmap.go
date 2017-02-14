@@ -24,7 +24,7 @@ type bucket struct {
 type InternalHashmap struct {
 	size      int
 	buckets   []*bucket
-	lobMask   uint32
+	lobMask   uint64
 	lobSize   uint8
 	seed      uint32
 	blockSize memory.BlockSize
@@ -45,10 +45,10 @@ func CreateEmptyInternalHashmap(size int) *InternalHashmap {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
-	lobMask := uint32(^(0xffffffff << lobSize))
+	lobMask := uint64(^(0xffffffffffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
 
-	hobSize := 32 - lobSize
+	hobSize := 64 - lobSize
 	blockSize := memory.SelectBlockSize(false, hobSize)
 	fmt.Printf("Size: %d, bucket count: %d, lobSize: %d, hobSize: %d, blockSize: %s\n", size, initialSize, lobSize, hobSize, blockSize)
 
@@ -70,7 +70,7 @@ func (h *InternalHashmap) Get(config *HashmapConfig, key unsafe.Pointer) (result
 
 	hashkey := config.KeyConfig.Hash(key, h.seed)
 
-	selectedBucket := hashkey & uint64(h.lobMask)
+	selectedBucket := hashkey & h.lobMask
 	b := h.buckets[selectedBucket]
 	maskedHash := hashkey >> h.lobSize
 
@@ -319,7 +319,7 @@ func (h *InternalHashmap) InternalSet(config *HashmapConfig, key unsafe.Pointer,
 	hobSize := uint32(64 - h.lobSize)
 
 	hashkey := config.KeyConfig.Hash(key, h.seed)
-	selectedBucket := hashkey & uint64(h.lobMask)
+	selectedBucket := hashkey & h.lobMask
 	b := h.buckets[selectedBucket]
 	if b == nil {
 		b = h.createEmptyBucket(config, hobSize)

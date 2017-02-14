@@ -18,7 +18,7 @@ func Test_Hashmap_Simple(t *testing.T) {
 		26: "zz",
 	}
 	original := NewIntToStringHashmap(data)
-	fmt.Printf("Map: %s\n", original.GoString())
+	t.Logf("Map: %s\n", original.GoString())
 	if original.Size() != len(data) {
 		t.Fatalf("Incorrect size")
 	}
