@@ -48,25 +48,9 @@ func Benchmark_Hashmap_Get_PackedBlock(b *testing.B) {
 }
 
 func Benchmark_Hashmap_Get_NotPackedBlock(b *testing.B) {
-	// flag.Parse()
-	// var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-	// var f *os.File
-	// fmt.Printf("cpuprofile: '%s'\n", *cpuprofile)
-	// if *cpuprofile != "" {
-	// 	fmt.Printf("Opening file...\n")
-	// 	file, err := os.Create(*cpuprofile)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	f = file
-	// }
 	for _, tc := range max {
 		data := prepareData(tc)
 		hashmap := createWithStragety(data, false)
-		// if *cpuprofile != "" {
-		// 	pprof.StartCPUProfile(f)
-		// 	defer pprof.StopCPUProfile()
-		// }
 		b.Run(fmt.Sprintf("n=%d", tc), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				testStrategy(hashmap)
