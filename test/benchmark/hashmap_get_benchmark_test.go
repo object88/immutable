@@ -1,12 +1,13 @@
 package benchmark
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/object88/immutable"
-	"github.com/object88/immutable/memory"
+	"github.com/object88/immutable/core"
 )
 
 const (
@@ -14,84 +15,56 @@ const (
 	letterIndexBits = 6                      // 6 bits to represent a letter index
 	letterIndexMask = 1<<letterIndexBits - 1 // All 1-bits, as many as letterIndexBits
 	letterIndexMax  = 63 / letterIndexBits   // # of letter indices fitting in 63 bits
-	max             = 500000
 )
 
-var keys []int
-var contents map[int]string
+var max = []int{5, 50, 500, 5000, 50000, 500000, 5000000}
 var result string
 var src = rand.NewSource(time.Now().UnixNano())
 
-var hashmapSmallBlock, hashmapLargeBlock, hashmapExtraLargeBlock, hashmapNoPacked *immutable.IntToStringHashmap
-
-func init() {
+func Benchmark_Hashmap_Get_One(b *testing.B) {
+	hashmapSizes := []int{5, 50, 500, 5000, 50000, 500000, 5000000}
 	stringLength := 100
-	contents = make(map[int]string, max)
-	keys = make([]int, max)
-	for i := 0; i < max; i++ {
-		keys[i] = i
-		contents[keys[i]] = generateString(stringLength)
-	}
-	hashmapSmallBlock = createWithStragety(memory.SmallBlock)
-	hashmapLargeBlock = createWithStragety(memory.LargeBlock)
-	hashmapExtraLargeBlock = createWithStragety(memory.ExtraLargeBlock)
-	hashmapNoPacked = createWithStragety(memory.NoPacking)
-}
-
-func Benchmark_Hashmap_Get_SmallBlock(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		testStrategy(hashmapSmallBlock)
-	}
-}
-
-func Benchmark_Hashmap_Get_LargeBlock(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		testStrategy(hashmapLargeBlock)
-	}
-}
-
-func Benchmark_Hashmap_Get_ExtraLargeBlock(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		testStrategy(hashmapExtraLargeBlock)
-	}
-}
-
-func Benchmark_Hashmap_Get_NoPacking(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		testStrategy(hashmapNoPacked)
-	}
-}
-
-func Benchmark_Hashmap_Get_NativeMap(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		var r string
-		for _, key := range keys {
-			r = getStringFromMap(key)
+	for _, hashmapSize := range hashmapSizes {
+		contents := make(map[int]string, hashmapSize)
+		key := int(src.Int63())
+		contents[key] = generateString(stringLength)
+		for len(contents) < hashmapSize {
+			k := int(src.Int63())
+			contents[k] = generateString(stringLength)
 		}
-		result = r
+
+		b.Run(fmt.Sprintf("n=%d/Packed", hashmapSize), func(b *testing.B) {
+			hashmap := immutable.NewIntToStringHashmap(contents, core.WithBucketStrategy(true))
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				testStrategy(key, hashmap)
+			}
+		})
+
+		b.Run(fmt.Sprintf("n=%d/Unpacked", hashmapSize), func(b *testing.B) {
+			hashmap := immutable.NewIntToStringHashmap(contents, core.WithBucketStrategy(false))
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				testStrategy(key, hashmap)
+			}
+		})
+
+		b.Run(fmt.Sprintf("n=%d/Native", hashmapSize), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				testNative(key, contents)
+			}
+		})
 	}
 }
 
-func getStringFromMap(key int) string {
-	s := contents[key]
-	return s
+func testNative(key int, data map[int]string) {
+	s := data[key]
+	result = s
 }
 
-func createWithStragety(blocksize memory.BlockSize) *immutable.IntToStringHashmap {
-	return immutable.NewIntToStringHashmap(contents)
-}
-
-func testStrategy(original *immutable.IntToStringHashmap) {
-	var r string
-	for _, key := range keys {
-		r = getStringFromImmutable(original, key)
-	}
-	result = r
-}
-
-func getStringFromImmutable(original *immutable.IntToStringHashmap, key int) string {
+func testStrategy(key int, original *immutable.IntToStringHashmap) {
 	s, _, _ := original.Get(key)
-	return s
+	result = s
 }
 
 // This code copied directly from StackOverflow; see randStringBytesMaskImprSrc

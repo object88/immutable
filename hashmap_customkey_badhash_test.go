@@ -100,7 +100,7 @@ func createHashmapAndData() (*core.InternalHashmap, *core.HashmapConfig, map[int
 		ValueConfig: strings.GetHandler(),
 	}
 
-	original := core.CreateEmptyInternalHashmap(max)
+	original := core.CreateEmptyInternalHashmap(false, max)
 
 	for k, v := range data {
 		key, value := k, v

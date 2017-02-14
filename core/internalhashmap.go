@@ -22,11 +22,12 @@ type bucket struct {
 
 // InternalHashmap is a read-only key-to-value collection
 type InternalHashmap struct {
-	size    int
-	buckets []*bucket
-	lobMask uint32
-	lobSize uint8
-	seed    uint32
+	size      int
+	buckets   []*bucket
+	lobMask   uint64
+	lobSize   uint8
+	seed      uint32
+	blockSize memory.BlockSize
 }
 
 const (
@@ -34,9 +35,9 @@ const (
 	loadFactor     = 6.0
 )
 
-var emptyHashmap = &InternalHashmap{0, nil, 0, 0, 0}
+var emptyHashmap = &InternalHashmap{0, nil, 0, 0, 0, memory.SmallBlockNoPacking}
 
-func CreateEmptyInternalHashmap(size int) *InternalHashmap {
+func CreateEmptyInternalHashmap(packed bool, size int) *InternalHashmap {
 	if size == 0 {
 		return emptyHashmap
 	}
@@ -44,20 +45,23 @@ func CreateEmptyInternalHashmap(size int) *InternalHashmap {
 	initialCount := size
 	initialSize := memory.NextPowerOfTwo(int(math.Ceil(float64(initialCount) / loadFactor)))
 	lobSize := memory.PowerOf(initialSize)
-	lobMask := uint32(^(0xffffffff << lobSize))
+	lobMask := uint64(^(0xffffffffffffffff << lobSize))
 	buckets := make([]*bucket, initialSize)
+
+	hobSize := 64 - lobSize
+	blockSize := memory.SelectBlockSize(packed, hobSize)
 
 	src := rand.NewSource(time.Now().UnixNano())
 	random := rand.New(src)
 	seed := uint32(random.Int31())
 
-	return &InternalHashmap{initialCount, buckets, lobMask, lobSize, seed}
+	return &InternalHashmap{initialCount, buckets, lobMask, lobSize, seed, blockSize}
 }
 
 // Get returns the value for the given key
 func (h *InternalHashmap) Get(config *HashmapConfig, key unsafe.Pointer) (result unsafe.Pointer, ok bool, err error) {
 	if key == nil {
-		return nil, false, errors.New("Element is nil")
+		return nil, false, errors.New("Key is nil")
 	}
 	if h.size == 0 {
 		return nil, false, nil
@@ -65,7 +69,7 @@ func (h *InternalHashmap) Get(config *HashmapConfig, key unsafe.Pointer) (result
 
 	hashkey := config.KeyConfig.Hash(key, h.seed)
 
-	selectedBucket := hashkey & uint64(h.lobMask)
+	selectedBucket := hashkey & h.lobMask
 	b := h.buckets[selectedBucket]
 	maskedHash := hashkey >> h.lobSize
 
@@ -199,7 +203,7 @@ func (h *InternalHashmap) ForEach(config *HashmapConfig, predicate ForEachPredic
 // Insert returns a new collection with the provided key-value pair added.
 func (h *InternalHashmap) Insert(config *HashmapConfig, key unsafe.Pointer, value unsafe.Pointer) (*InternalHashmap, error) {
 	if h.size == 0 {
-		result := CreateEmptyInternalHashmap(1)
+		result := CreateEmptyInternalHashmap(config.Options.PackedBucket, 1)
 		result.InternalSet(config, key, value)
 		return result, nil
 	}
@@ -214,7 +218,7 @@ func (h *InternalHashmap) Insert(config *HashmapConfig, key unsafe.Pointer, valu
 	abort := make(chan struct{})
 	size := h.Size()
 	if matched {
-		result = CreateEmptyInternalHashmap(size)
+		result = CreateEmptyInternalHashmap(config.Options.PackedBucket, size)
 		for kvp := range h.iterate(config, abort) {
 			insertValue := kvp.Value
 			if config.KeyConfig.Compare(kvp.Key, key) {
@@ -224,7 +228,7 @@ func (h *InternalHashmap) Insert(config *HashmapConfig, key unsafe.Pointer, valu
 		}
 	} else {
 		size++
-		result = CreateEmptyInternalHashmap(size)
+		result = CreateEmptyInternalHashmap(config.Options.PackedBucket, size)
 		for kvp := range h.iterate(config, abort) {
 			result.InternalSet(config, kvp.Key, kvp.Value)
 		}
@@ -265,10 +269,10 @@ func (h *InternalHashmap) Remove(config *HashmapConfig, key unsafe.Pointer) (*In
 
 	newSize := h.Size() - 1
 	if newSize == 0 {
-		return CreateEmptyInternalHashmap(0), nil
+		return CreateEmptyInternalHashmap(config.Options.PackedBucket, 0), nil
 	}
 
-	result := CreateEmptyInternalHashmap(newSize)
+	result := CreateEmptyInternalHashmap(config.Options.PackedBucket, newSize)
 	abort := make(chan struct{})
 	for kvp := range h.iterate(config, abort) {
 		if !config.KeyConfig.Compare(kvp.Key, key) {
@@ -299,7 +303,7 @@ func (h *InternalHashmap) String(config *HashmapConfig) string {
 }
 
 func (h *InternalHashmap) instantiate(config *HashmapConfig, size int, contents []*KeyValuePair) *BaseStruct {
-	hash := CreateEmptyInternalHashmap(size)
+	hash := CreateEmptyInternalHashmap(config.Options.PackedBucket, size)
 
 	for _, v := range contents {
 		if v != nil {
@@ -314,15 +318,15 @@ func (h *InternalHashmap) InternalSet(config *HashmapConfig, key unsafe.Pointer,
 	hobSize := uint32(64 - h.lobSize)
 
 	hashkey := config.KeyConfig.Hash(key, h.seed)
-	selectedBucket := hashkey & uint64(h.lobMask)
+	selectedBucket := hashkey & h.lobMask
 	b := h.buckets[selectedBucket]
 	if b == nil {
-		b = createEmptyBucket(config, hobSize)
+		b = h.createEmptyBucket(config, hobSize)
 		h.buckets[selectedBucket] = b
 	}
 	for b.entryCount == bucketCapacity {
 		if b.overflow == nil {
-			b.overflow = createEmptyBucket(config, hobSize)
+			b.overflow = h.createEmptyBucket(config, hobSize)
 		}
 		b = b.overflow
 	}
@@ -333,10 +337,10 @@ func (h *InternalHashmap) InternalSet(config *HashmapConfig, key unsafe.Pointer,
 	b.entryCount++
 }
 
-func createEmptyBucket(config *HashmapConfig, hobSize uint32) *bucket {
+func (h *InternalHashmap) createEmptyBucket(config *HashmapConfig, hobSize uint32) *bucket {
 	return &bucket{
 		entryCount: 0,
-		hobs:       memory.AllocateMemories(config.Options.BucketStrategy, hobSize, bucketCapacity),
+		hobs:       memory.AllocateMemories(h.blockSize, hobSize, bucketCapacity),
 		keys:       config.KeyConfig.CreateBucket(bucketCapacity),
 		values:     config.ValueConfig.CreateBucket(bucketCapacity),
 		overflow:   nil,

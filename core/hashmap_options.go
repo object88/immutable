@@ -1,15 +1,13 @@
 package core
 
-import "github.com/object88/immutable/memory"
-
 // HashmapOption can be implemented to set a hash map option using the
 // NewInternalHashmap function
 type HashmapOption func(*HashmapOptions)
 
 // WithBucketStrategy selects a bucket strategy for the hash map
-func WithBucketStrategy(blocksize memory.BlockSize) HashmapOption {
+func WithBucketStrategy(packBuckets bool) HashmapOption {
 	return func(o *HashmapOptions) {
-		o.BucketStrategy = blocksize
+		o.PackedBucket = packBuckets
 	}
 }
 
@@ -17,11 +15,11 @@ func WithBucketStrategy(blocksize memory.BlockSize) HashmapOption {
 // a hash map for memory allocation.  Do not instantiate this directly; use
 // the NewHashmapOptions function instead.
 type HashmapOptions struct {
-	BucketStrategy memory.BlockSize
+	PackedBucket bool
 }
 
 func DefaultHashmapOptions() *HashmapOptions {
 	return &HashmapOptions{
-		BucketStrategy: memory.LargeBlock,
+		PackedBucket: false,
 	}
 }
